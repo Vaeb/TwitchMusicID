@@ -22,7 +22,7 @@ export const accessKey = '';
 export const accessSecret = '';
 ```
 
-#### src/mp4 (Folder)
+#### src/mp4/ (Folder)
 ```
 < Empty >
 ```
