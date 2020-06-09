@@ -1,7 +1,14 @@
+/* eslint-disable no-await-in-loop */
+// import util from 'util';
 import axios from 'axios';
 
-import { delay, chunkBy } from '../../util.js';
-import { audioSessionId } from '../../hidden.js';
+import { fetchAuth } from '../../setup.js';
+import { delay, chunkBy, downloadFile } from '../../util.js';
+import { scan, identify } from '../identify.js';
+
+const searchPeriod = 1000 * 60 * 60 * 24 * 7;
+const pages = 1;
+const chunkSize = 1;
 
 export default {
     cmds: ['check'],
@@ -12,71 +19,99 @@ export default {
         console.log('Checking...');
         chatClient.say(channel, 'Checking...');
 
+        const { clientId2 } = await fetchAuth();
+
         const endDate = new Date().toISOString();
-        const startDate = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString();
+        const startDate = new Date(Date.now() - searchPeriod).toISOString();
 
         const clipsRequest = twitchClient.helix.clips.getClipsForBroadcasterPaginated(136765278, { startDate, endDate });
 
         let i = 0;
 
-        for (let iter = 0; iter < 1; iter++) {
-            // eslint-disable-next-line no-await-in-loop
-            const clips = await clipsRequest.getNext();
+        for (let iter = 0; iter < pages; iter++) {
+            let clipsCollection = await clipsRequest.getNext();
+            if (!clipsCollection.length) break;
+            clipsCollection = chunkBy(clipsCollection, chunkSize);
 
-            if (!clips.length) break;
+            // clipsCollection = [[await twitchClient.helix.clips.getClipById('AwkwardSpeedyIcecreamKevinTurtle')]];
 
-            const clipChunks = chunkBy(clips, 10);
-
-            for (const clipChunk of clipChunks) {
+            for (const clips of clipsCollection) {
                 console.log('Fetching!');
-                let clipResultsNow = (
-                // eslint-disable-next-line no-await-in-loop
-                    await Promise.all(
-                        clipChunk.map(async (clip) => {
-                            const {
-                                data: { success, message: clipAudioId },
-                            } = await axios.get('https://twitchaudio.com/api.php', {
-                                params: {
-                                    action: 'newJobClip',
-                                    clip_slug: clip.id,
+
+                await Promise.all(
+                    clips.map(async (clip) => {
+                        console.log('clip', clip);
+                        const { data: responseData } = await axios({
+                            method: 'POST',
+                            url: 'https://gql.twitch.tv/gql',
+                            headers: {
+                                'Client-Id': clientId2,
+                                'Content-Type': 'text/plain;charset=UTF-8',
+                            },
+                            data: [
+                                {
+                                    operationName: 'VideoAccessToken_Clip',
+                                    // variables: { slug: clip.id },
+                                    variables: { slug: clip.id },
+                                    extensions: {
+                                        persistedQuery: {
+                                            version: 1,
+                                            sha256Hash: '9bfcc0177bffc730bd5a5a89005869d2773480cf1738c592143b5173634b7d15',
+                                        },
+                                    },
                                 },
-                                headers: { cookie: `PHPSESSID=${audioSessionId}` },
-                            });
+                            ],
+                        });
 
-                            if (!success) return { status: false };
+                        // Get lowest quality above 400p if available... otherwise highest available.
+                        const mp4Collection = responseData[0].data.clip.videoQualities
+                            .map(mp4Data => ({
+                                ...mp4Data,
+                                quality: parseInt(mp4Data.quality, 10),
+                            }))
+                            .sort((a, b) => b.quality - a.quality);
+                        const mp4CollectionGood = mp4Collection.filter(mp4Data => mp4Data.quality > 400);
+                        const mp4Data = mp4CollectionGood.length > 0 ? mp4CollectionGood[mp4CollectionGood.length - 1] : mp4Collection[0];
 
-                            const { data: song } = await axios.get('https://twitchaudio.com/api.php', {
-                                params: {
-                                    action: 'jobClipStatus',
-                                    id: clipAudioId,
-                                },
-                                headers: { cookie: `PHPSESSID=${audioSessionId}` },
-                            });
+                        clip.mp4Url = mp4Data.sourceURL;
 
-                            // if (song.status === 'failed') return false;
+                        console.log('Fetched clip mp4 urls');
 
-                            return { clip, song, status: song.status };
-                        }),
-                    )
+                        clip.mp4Name = `${clip.id}.mp4`;
+                        clip.mp4Path = `./src/mp4/${clip.mp4Name}`;
+
+                        await downloadFile(clip.mp4Url, clip.mp4Path);
+
+                        console.log('Saved mp4s to file system');
+
+                        const fingerPath = await scan(clip.mp4Name);
+                        const songData = await identify(fingerPath);
+
+                        if (!songData) return false;
+
+                        clip.song = songData.metadata.music[0];
+
+                        return true;
+                    })
                 );
 
-                // clipResults = [...clipResults, ...clipResultsNow.filter(clipData => clipData.status === 'successful')];
-                console.log('Fetched!!!', ...clipResultsNow.map(data => `[[${data.clip.title} --- ${data.song.status}]]`));
+                const clipsSongs = clips.filter(clip => clip.song !== undefined);
 
-                clipResultsNow = clipResultsNow.filter(clipData => clipData.status === 'successful');
+                console.log('Outputting data');
 
-                for (const clipData of clipResultsNow) {
-                    const { clip, song } = clipData;
-                    console.log(++i, '|', clip.title, clip.url, clip.creationDate, clip.views, '|', song.status, song.title, song.artists, song);
+                for (const clip of clipsSongs) {
+                    i++;
+                    console.log(i, clip);
                     chatClient.say(
                         channel,
-                        `${i} | ${clip.title} ${clip.url} ${String(clip.creationDate).substr(0, 15)} ${clip.views} views | ${song.title}, ${
-                            song.artists
-                        }`,
+                        `${i} | ${String(clip.creationDate).substr(0, 15)} | ${clip.url} | ${clip.views} views -->> ${clip.song.artists.map(
+                            artist => artist.name
+                        )} | ${clip.song.title} | ${clip.song.label}`
                     );
                 }
 
-                // eslint-disable-next-line no-await-in-loop
+                return; // end early
+
                 await delay(1000 * 1);
             }
         }

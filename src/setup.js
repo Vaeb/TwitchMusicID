@@ -6,8 +6,10 @@ import path from 'path';
 
 export const prefix = ';';
 
+export const fetchAuth = async () => JSON.parse(await fs.readFile('./src/auth.json'));
+
 export const twitchClientPromise = new Promise(async (resolve) => {
-    const credentials = JSON.parse(await fs.readFile('./src/auth.json'));
+    const credentials = await fetchAuth();
 
     const twitchClient = TwitchClient.withCredentials(credentials.clientId, credentials.accessToken, undefined, {
         clientSecret: credentials.clientSecret,

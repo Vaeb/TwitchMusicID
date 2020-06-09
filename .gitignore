@@ -1,6 +1,8 @@
 # Custom
 src/auth.json
 src/hidden.js
+src/mp4/
+src/acrcloud_extr_*
 
 # Logs
 logs
