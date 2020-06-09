@@ -1,3 +1,7 @@
+# Custom
+src/auth.json
+src/hidden.js
+
 # Logs
 logs
 *.log
