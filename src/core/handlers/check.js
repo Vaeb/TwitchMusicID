@@ -55,7 +55,7 @@ export default {
                                     action: 'jobClipStatus',
                                     id: clipAudioId,
                                 },
-                                headers: { cookie: 'PHPSESSID=n4atu3si0tks1escuo6pbeufs0' },
+                                headers: { cookie: `PHPSESSID=${audioSessionId}` },
                             });
 
                             // if (song.status === 'failed') return false;
@@ -85,11 +85,6 @@ export default {
                 await delay(1000 * 1);
             }
         }
-
-        // for await (const clip of twitchClient.helix.clips.getClipsForBroadcasterPaginated(136765278, { endDate, startDate })) {
-        //     console.log(++i, 'clip', clip.title, clip);
-        //     if (i >= 30) break;
-        // }
 
         chatClient.say(channel, 'Checked!');
         console.log('Check handled!');
