@@ -10,7 +10,7 @@ Identify music playing in Twitch clips.
     "clientId2": "",
     "clientSecret": "",
     "accessToken": "",
-    "expiryTimestamp": ,
+    "expiryTimestamp": 0,
     "refreshToken": ""
 }
 ```
