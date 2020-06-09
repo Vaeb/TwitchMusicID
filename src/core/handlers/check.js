@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { delay, chunkBy } from '../../util.js';
 import { audioSessionId } from '../../hidden.js';
 
 export default {
@@ -24,13 +25,7 @@ export default {
 
             if (!clips.length) break;
 
-            const clipChunks = clips.reduce((all, one, i) => {
-                const ch = Math.floor(i / 10);
-                all[ch] = [].concat(all[ch] || [], one);
-                return all;
-            }, []);
-
-            const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const clipChunks = chunkBy(clips, 10);
 
             for (const clipChunk of clipChunks) {
                 console.log('Fetching!');
@@ -48,7 +43,7 @@ export default {
                                 headers: { cookie: `PHPSESSID=${audioSessionId}` },
                             });
 
-                            if (!success) return { status: 'failed' };
+                            if (!success) return { status: false };
 
                             const { data: song } = await axios.get('https://twitchaudio.com/api.php', {
                                 params: {
