@@ -22,7 +22,7 @@ const options = {
 export const scan = async (idNum, fileName) => {
     try {
         const { stderr } = await execFileAsync(
-            'acrcloud_extr_win.exe',
+            'acrcloud_extr_linux',
             ['-cli', '-l', '61', '-i', `./mp4/${fileName}`, '--debug'],
             { cwd: './src' }
         );
