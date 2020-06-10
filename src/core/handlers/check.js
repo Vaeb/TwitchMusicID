@@ -9,12 +9,12 @@ import { scan, identify } from '../identify.js';
 
 // const useSearchPeriod = false;
 // const searchPeriod = 1000 * 60 * 60 * 24 * 7;
-const pages = 2; // <= 100 clips
+const pages = 1; // <= 100 clips
 const skipPages = 0;
 const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
 const chunkSize = 3;
 const delayTime = 1000 * 3;
-const batches = 3;
+const batches = 1;
 
 const checkClips = async (twitchClient, chatClient, channel, startDate, endDate) => {
     const { clientId2 } = await fetchAuth();
