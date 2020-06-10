@@ -7,7 +7,7 @@ import { twitchClientPromise, chatClientPromise, commands } from '../setup.js';
     chatClient.onPrivmsg((channel, user, message) => {
         if (user !== 'vaeben') return;
 
-        const [messageCmd, ...messageArgs] = message.split(/\s+/);
+        const [messageCmd, ...messageArgs] = message.split(' ');
 
         for (const command of commands) {
             if (command.cmds.some(cmd => cmd === messageCmd)) {
@@ -17,7 +17,7 @@ import { twitchClientPromise, chatClientPromise, commands } from '../setup.js';
                     channel,
                     user,
                     message,
-                    messageArgs,
+                    args: messageArgs,
                 });
                 break;
             }

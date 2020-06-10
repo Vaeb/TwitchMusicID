@@ -5,7 +5,7 @@ export const mongoUrl = 'mongodb://localhost:27017';
 export const dbName = 'tmusicid';
 
 let db;
-// export const getDb = () => db;
+export const getDb = () => db;
 
 let dbPromiseResolve;
 export const dbPromise = new Promise((resolve) => {
@@ -17,10 +17,11 @@ MongoClient.connect(mongoUrl, { useUnifiedTopology: true })
         console.log('Mongo connected successfully!');
 
         db = client.db(dbName);
-        client.close();
 
         dbPromiseResolve(db);
     })
     .catch((err) => {
         console.log('Mongo failed to connect:', err);
     });
+
+console.log('Loaded DB');

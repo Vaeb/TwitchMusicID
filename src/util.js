@@ -2,7 +2,11 @@ import fs from 'fs';
 
 import download from 'download';
 
-export const sendMessage = (chatClient, channel, message) => chatClient.say(channel, `${message}`);
+export const sendMessage = (chatClient, channel, message) => {
+    message = `${message}`;
+    if (message.length > 499) message = `${message.substr(0, 496)}...`;
+    return chatClient.say(channel, message);
+};
 
 export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
