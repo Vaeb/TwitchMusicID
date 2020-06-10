@@ -12,7 +12,7 @@ export const dbPromise = new Promise((resolve) => {
     dbPromiseResolve = resolve;
 });
 
-MongoClient.connect(mongoUrl)
+MongoClient.connect(mongoUrl, { useUnifiedTopology: true })
     .then((client) => {
         console.log('Mongo connected successfully!');
 
