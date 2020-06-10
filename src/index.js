@@ -1,4 +1,5 @@
 import { chatClientPromise } from './setup.js';
+import './db.js';
 import './core/events.js';
 
 (async () => {
