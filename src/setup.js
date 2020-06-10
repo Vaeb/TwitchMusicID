@@ -4,6 +4,8 @@ import * as fs from 'fs-extra';
 import glob from 'glob';
 import path from 'path';
 
+console.log(`\n\n\n${'-'.repeat(120)}`);
+
 export const prefix = ';';
 
 export const fetchAuth = async () => JSON.parse(await fs.readFile('./src/auth.json'));

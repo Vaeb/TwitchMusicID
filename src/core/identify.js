@@ -21,11 +21,16 @@ const options = {
 
 export const scan = async (fileName) => {
     try {
-        await execFileAsync(
+        const { stderr } = await execFileAsync(
             'acrcloud_extr_win.exe',
             ['-cli', '-l', '61', '-i', `./mp4/${fileName}`, '--debug'],
             { cwd: './src' }
         );
+
+        if (stderr && stderr.includes('create fingerprint error ')) {
+            console.log('[scan] stderr:', stderr);
+            return { error: stderr };
+        }
 
         return `./src/mp4/${fileName}.cli.lo`;
     } catch (err) {
@@ -88,7 +93,7 @@ export const identify = async (filePath) => {
         const response = await upload(Buffer.from(bitmap));
         console.log('Response:', response);
 
-        if (response.status.code != 0) return false;
+        // if (response.status.code != 0) return false;
 
         return response;
     } catch (err) {

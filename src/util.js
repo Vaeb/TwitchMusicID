@@ -2,6 +2,8 @@ import fs from 'fs';
 
 import download from 'download';
 
+export const sendMessage = (chatClient, channel, message) => chatClient.say(channel, `${message}`);
+
 export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 export const chunkBy = (arr, size) => arr.reduce((all, one, i) => {
