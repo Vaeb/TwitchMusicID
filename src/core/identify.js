@@ -19,7 +19,7 @@ const options = {
     access_secret: accessSecret,
 };
 
-export const scan = async (fileName) => {
+export const scan = async (idNum, fileName) => {
     try {
         const { stderr } = await execFileAsync(
             'acrcloud_extr_win.exe',
@@ -28,13 +28,13 @@ export const scan = async (fileName) => {
         );
 
         if (stderr && stderr.includes('create fingerprint error ')) {
-            console.log('[scan] stderr:', stderr);
+            console.log('>', idNum, '[scan] stderr:', stderr);
             return { error: stderr };
         }
 
         return `./src/mp4/${fileName}.cli.lo`;
     } catch (err) {
-        console.log(err);
+        console.log('>', idNum, '[scan] Error:', err);
         return null;
     }
 };
@@ -83,21 +83,21 @@ function upload(data) {
     });
 }
 
-export const identify = async (filePath) => {
+export const identify = async (idNum, filePath) => {
     // filePath = './src/mp4/Holiday.mp3.cli.lo';
-    console.log('Identifying', filePath);
+    console.log('>', idNum, 'Identifying', filePath);
 
     const bitmap = fs.readFileSync(filePath);
 
     try {
         const response = await upload(Buffer.from(bitmap));
-        console.log('Response:', response);
+        console.log('>', idNum, 'Response:', response, response.status.code == 0 ? response.metadata.music.map(song => `<${song.score}>`).join(', ') : '');
 
         // if (response.status.code != 0) return false;
 
         return response;
     } catch (err) {
-        console.log('Error:', err);
+        console.log('>', idNum, '[identify] Error:', err);
         return null;
     }
 };

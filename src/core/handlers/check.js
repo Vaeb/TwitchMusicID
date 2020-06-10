@@ -9,8 +9,9 @@ import { scan, identify } from '../identify.js';
 
 const useSearchPeriod = false;
 const searchPeriod = 1000 * 60 * 60 * 24 * 7;
-const pages = 4;
-const skipPages = 2;
+const pages = 1; // <= 100 clips
+const skipPages = 0;
+const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
 const chunkSize = 3;
 const delayTime = 1000 * 3;
 
@@ -43,6 +44,8 @@ export default {
         for (let iter = 0; iter < pages; iter++) {
             if (scanningBlockedAll) break;
 
+            console.log('[Starting page]:', iter + 1);
+
             let clipsCollection = await clipsRequest.getNext();
             if (!clipsCollection.length) break;
 
@@ -68,6 +71,7 @@ export default {
                         const clipNum = ++i;
 
                         console.log('Clip', clipNum, '||', clip.id, '||', clip.title, '||', clip.views, 'views');
+                        if (clipNum <= skipClips) return false;
 
                         let fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
                         const fingerExistsPre = fs.existsSync(`./src/mp4/${clip.id}.mp4.cli.lo`);
@@ -120,7 +124,7 @@ export default {
 
                             console.log('>', clipNum, 'Saved mp4s to file system');
 
-                            fingerPath = await scan(clip.mp4Name);
+                            fingerPath = await scan(clipNum, clip.mp4Name);
 
                             fs.unlinkSync(clip.mp4Path);
 
@@ -139,7 +143,7 @@ export default {
 
                         if (!clip.scanningBlocked) {
                             didScan = true;
-                            const songData = await identify(fingerPath);
+                            const songData = await identify(clipNum, fingerPath);
 
                             console.log('>', clipNum, 'Checked for song data');
 
@@ -160,10 +164,10 @@ export default {
                         let outStr = `${clipNum} | ${String(clip.creationDate).substr(0, 15)} | ${clip.url} | ${clip.views} views`;
 
                         if (clip.song) {
-                            outStr = `${outStr} -->> ${clip.song.artists.map(artist => artist.name)} | ${clip.song.title} | ${clip.song.label}`;
+                            outStr = `${outStr} ---> ${clip.song.artists.map(artist => artist.name)} | ${clip.song.title} | ${clip.song.label}`;
                             sendMessage(chatClient, channel, outStr);
                         } else {
-                            outStr = `${outStr} -->> No songs found`;
+                            outStr = `${outStr} ---> No songs found`;
                         }
 
                         return true;
@@ -176,6 +180,8 @@ export default {
                     await delay(delayTime);
                 }
             }
+
+            console.log('[Checked page]:', iter + 1);
         }
 
         sendMessage(chatClient, channel, 'Checked!');
