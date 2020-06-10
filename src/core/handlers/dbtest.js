@@ -1,4 +1,4 @@
-import { db } from '../../db.js';
+import { dbPromise } from '../../db.js';
 
 export default {
     cmds: ['dbtest'],
@@ -7,6 +7,8 @@ export default {
 
     func: async ({ chatClient, channel }) => {
         try {
+            const db = await dbPromise;
+
             const numClips = await db.clips.count();
 
             chatClient.say(channel, `Found ${numClips} clips!`);

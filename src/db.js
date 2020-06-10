@@ -4,15 +4,23 @@ export const mongoUrl = 'mongodb://localhost:27017';
 
 export const dbName = 'tmusicid';
 
-export const mongoClient = new MongoClient(mongoUrl);
+let db;
+// export const getDb = () => db;
 
-export const db = mongoClient.db(dbName);
+let dbPromiseResolve;
+export const dbPromise = new Promise((resolve) => {
+    dbPromiseResolve = resolve;
+});
 
-(async () => {
-    try {
-        await mongoClient.connect();
-        console.log('Connected to mongo server successfully');
-    } catch (err) {
-        console.log(err);
-    }
-})();
+MongoClient.connect(mongoUrl)
+    .then((client) => {
+        console.log('Mongo connected successfully!');
+
+        db = client.db(dbName);
+        client.close();
+
+        dbPromiseResolve(db);
+    })
+    .catch((err) => {
+        console.log('Mongo failed to connect:', err);
+    });
