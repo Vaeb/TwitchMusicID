@@ -24,7 +24,7 @@ const options = {
 export const fingerprint = async (idNum, fileName) => {
     try {
         const { stderr } = await execFileAsync(
-            process.platform === 'win32' ? 'acrcloud_extr_win.exe' : 'acrcloud_extr_linux',
+            process.platform === 'win32' ? 'acrcloud_extr_win.exe' : './acrcloud_extr_linux',
             ['-cli', '-l', '61', '-i', `./mp4/${fileName}`, '--debug'],
             { cwd: './src' }
         );
