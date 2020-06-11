@@ -52,7 +52,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
 
         send('Checked page', page);
 
-        if (page >= 1) return;
+        if (page >= 2) return;
     }
 };
 
