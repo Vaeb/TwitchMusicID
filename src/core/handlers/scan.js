@@ -33,7 +33,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
 
         const newDocuments = [];
 
-        const clipChunks = chunkBy(clipsCollection, chunkSize);
+        const clipChunks = chunkBy(clips, chunkSize);
 
         for (let i = 0; i < clipChunks.length; i++) {
             const clipsSubset = clipChunks[i];
