@@ -175,7 +175,7 @@ export const identifyClip = async (clip, clientId2) => {
 
     fs.unlinkSync(clip.mp4Path);
 
-    if (typeof failed === 'object') {
+    if (failed || typeof failed === 'object') {
         clip.fingerprintFailed = true;
         return null;
     }
