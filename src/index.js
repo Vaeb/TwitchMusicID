@@ -1,10 +1,11 @@
-import { chatClientPromise } from './setup.js';
+import { chatClientPromise, getConnectedResolve } from './setup.js';
 import './db.js';
 import './core/events.js';
 
 (async () => {
     const chatClient = await chatClientPromise;
     await chatClient.connect();
+    getConnectedResolve()(true);
 
     console.log('Loaded TwitchMusicId!');
 })();

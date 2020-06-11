@@ -8,12 +8,25 @@ console.log(`\n\n\n${'-'.repeat(120)}`);
 
 export const prefix = ';';
 
+let connectedResolve;
+export const getConnectedResolve = () => connectedResolve;
+export const connectedPromise = new Promise((resolve) => {
+    connectedResolve = resolve;
+});
+
 export const fetchAuth = async () => JSON.parse(await fs.readFile('./src/auth.json'));
+
+let twitchClientInternal;
+let chatClientInternal;
+
+export const fetchTwitchClient = () => twitchClientInternal;
+
+export const fetchChatClient = () => chatClientInternal;
 
 export const twitchClientPromise = new Promise(async (resolve) => {
     const credentials = await fetchAuth();
 
-    const twitchClient = TwitchClient.withCredentials(credentials.clientId, credentials.accessToken, undefined, {
+    twitchClientInternal = TwitchClient.withCredentials(credentials.clientId, credentials.accessToken, undefined, {
         clientSecret: credentials.clientSecret,
         refreshToken: credentials.refreshToken,
         expiry: credentials.expiryTimestamp === null ? null : new Date(credentials.expiryTimestamp),
@@ -32,15 +45,15 @@ export const twitchClientPromise = new Promise(async (resolve) => {
     });
 
     console.log('Loaded TwitchClient');
-    resolve(twitchClient);
+    resolve(twitchClientInternal);
 });
 
 export const chatClientPromise = new Promise(async (resolve) => {
     const twitchClient = await twitchClientPromise;
-    const chatClient = await ChatClient.forTwitchClient(twitchClient, { channels: ['vaeben', 'morlega'] });
+    chatClientInternal = await ChatClient.forTwitchClient(twitchClient, { channels: ['vaeben', 'morlega'] });
 
     console.log('Loaded ChatClient');
-    resolve(chatClient);
+    resolve(chatClientInternal);
 });
 
 export const commands = [];

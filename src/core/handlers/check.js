@@ -5,7 +5,7 @@ import axios from 'axios';
 
 import { fetchAuth } from '../../setup.js';
 import { sendMessage, delay, chunkBy, downloadFile } from '../../util.js';
-import { scan, identify } from '../identify.js';
+import { fingerprint, identify } from '../identify.js';
 
 // const useSearchPeriod = false;
 // const searchPeriod = 1000 * 60 * 60 * 24 * 7;
@@ -77,7 +77,7 @@ const checkClips = async (twitchClient, chatClient, channel, startDate, endDate)
                     console.log('Clip', clipNum, '||', clip.id, '||', clip.title, '||', clip.views, 'views');
                     if (clipNum <= skipClips) return false;
 
-                    let fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
+                    const fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
                     const fingerExistsPre = fs.existsSync(`./src/mp4/${clip.id}.mp4.cli.lo`);
 
                     if (fingerExistsPre) {
@@ -128,11 +128,11 @@ const checkClips = async (twitchClient, chatClient, channel, startDate, endDate)
 
                         console.log('>', clipNum, 'Saved mp4s to file system');
 
-                        fingerPath = await scan(clipNum, clip.mp4Name);
+                        const failed = await fingerprint(clipNum, clip.mp4Name);
 
                         fs.unlinkSync(clip.mp4Path);
 
-                        if (typeof fingerPath === 'object') {
+                        if (typeof failed === 'object') {
                             clip.scanningBlocked = true;
                             clip.song = { title: 'Audio fingerprinting failed', label: '', artists: [] };
                         }

@@ -9,9 +9,9 @@ export default {
         try {
             const db = await dbPromise;
 
-            console.log('db', db);
+            console.log('db', typeof db);
 
-            const numClips = await db.collection('clips').count();
+            const numClips = await db.collection('clips').countDocuments();
 
             chatClient.say(channel, `Found ${numClips} clips!`);
             console.log(`Found ${numClips} clips!`);

@@ -5,14 +5,18 @@ const dbModule = require('../../db.js');
 const utilModule = require('../../util.js');
 
 const { dbPromise } = dbModule;
-const { sendMessage, delay, chunkBy, downloadFile } = utilModule;
+const { sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById } = utilModule;
 
 export default {
     cmds: ['eval'],
     desc: 'Test the mongo db is working',
     params: [],
 
-    func: async ({ chatClient, channel, args }) => {
+    func: async ({
+        twitchClient, chatClient, channel, user, args,
+    }) => {
+        const tc = twitchClient;
+        const cc = chatClient;
         const db = await dbPromise;
         const argsFull = args.join(' ');
         const send = sendMessage.bind(this, chatClient, channel);

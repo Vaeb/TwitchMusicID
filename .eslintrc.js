@@ -23,7 +23,7 @@ module.exports = {
         'import/prefer-default-export': 'off',
         // "jsx-a11y/href-no-hash": "off",
         // "linebreak-style": "off",
-        'max-len': ['error', { code: 170, tabWidth: 4, ignoreComments: true }],
+        'max-len': ['error', { code: 186, tabWidth: 4, ignoreComments: true }],
         'no-async-promise-executor': 'off',
         // "no-bitwise": "off",
         'no-cond-assign': 'off',
