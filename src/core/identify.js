@@ -165,6 +165,8 @@ export const identifyClip = async (clip, clientId2) => {
         return null;
     }
 
+    console.log('Fetching, fingerprinting, and identifying', clip.id);
+
     await fetchMp4Data(clip, clientId2);
 
     await downloadFile(clip.mp4Url, clip.mp4Path);
