@@ -18,7 +18,7 @@ const batches = 1;
 
 const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
     startStamp = undefined; endStamp = undefined;
-    send('Scanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
+    send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
 
     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
 
@@ -26,7 +26,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
     let page = 0;
     while ((clips = await clipPages.getNext()).length) {
         page++;
-        console.log('Checking page', page);
+        console.log('\n\nChecking page', page);
 
         const clipRecords = await clipsStored(clips, clipsCollection);
         const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
