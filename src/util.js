@@ -31,6 +31,7 @@ export const makeDocumentFromClip = (clip) => {
         slug: clip.id,
         creationStamp: +clip.creationDate,
         views: clip.views,
+        channel: 'buddha',
     };
 
     if (clip.fingerprintFailed) {
