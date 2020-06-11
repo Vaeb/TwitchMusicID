@@ -32,16 +32,29 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
 
         const newDocuments = [];
-        await Promise.all(clips.map(async (clip) => {
-            if (storedSlugs[clip.id]) return;
 
-            const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
+        const clipChunks = chunkBy(clipsCollection, chunkSize);
 
-            if (songData) {
-                newDocuments.push(makeDocumentFromClip(clip));
+        for (let i = 0; i < clipChunks.length; i++) {
+            const clipsSubset = clipChunks[i];
+            let didScan = false;
+
+            await Promise.all(clipsSubset.map(async (clip) => {
+                if (storedSlugs[clip.id]) return;
+
+                const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
+
+                if (songData) {
+                    newDocuments.push(makeDocumentFromClip(clip));
+                    didScan = didScan || typeof songData === 'object';
+                }
+                // send(format(clip));
+            }));
+
+            if (didScan) {
+                await delay(delayTime);
             }
-            // send(format(clip));
-        }));
+        }
 
         console.log('newDocuments', newDocuments);
         console.log('Added', newDocuments.length, 'new clips to db');
