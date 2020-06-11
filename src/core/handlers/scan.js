@@ -48,7 +48,9 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         console.log('newDocuments', newDocuments);
         console.log('Added', newDocuments.length, 'new clips to db');
 
-        clipsCollection.insertMany(newDocuments, { ordered: false });
+        if (newDocuments.length > 0) {
+            clipsCollection.insertMany(newDocuments, { ordered: false });
+        }
 
         send('Checked page', page);
         return;
