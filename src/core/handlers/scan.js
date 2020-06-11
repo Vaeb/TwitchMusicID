@@ -53,7 +53,8 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         }
 
         send('Checked page', page);
-        return;
+
+        if (page >= 2) return;
     }
 };
 
@@ -94,6 +95,7 @@ export default {
 
         console.log('Fetching oldest clip date');
         const oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
+        console.log('Found oldest clip date:', oldestStartDate);
 
         let timeframeSize = 1000 * 60 * 80;
         let timeframeBetween = timeframeSize;
