@@ -37,9 +37,9 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         await Promise.all(clips.map(async (clip) => {
             if (storedSlugs[clip.id]) return;
 
-            const songData = await identifyClip(clip, clientId2);
+            const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
 
-            if (songData !== undefined) {
+            if (songData) {
                 newDocuments.push(makeDocumentFromClip(clip));
             }
             // send(format(clip));
