@@ -156,16 +156,16 @@ let scanningBlockedAll = false;
 // Add metadata to clip
 // Return full song data (or null if stopped midway)
 export const identifyClip = async (clip, clientId2) => {
-    if (scanningBlockedAll) return undefined;
+    if (scanningBlockedAll) return false;
 
     const fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
     const fingerExistsAlready = fs.existsSync(fingerPath);
-    if (fingerExistsAlready) {
+    if (fingerExistsAlready) { // Fingerprint could exist from a failed identify
         console.log('Fingerprint already exists for', clip.id);
-        return null;
+        // return true; // undefined
+    } else {
+        console.log('No cached fingerprint for', clip.id);
     }
-
-    console.log('Fetching, fingerprinting, and identifying', clip.id);
 
     await fetchMp4Data(clip, clientId2);
 
@@ -177,7 +177,7 @@ export const identifyClip = async (clip, clientId2) => {
 
     if (failed || typeof failed === 'object') {
         clip.fingerprintFailed = true;
-        return null;
+        return true;
     }
 
     // const songData = { status: { code: 1001 } };
@@ -187,10 +187,10 @@ export const identifyClip = async (clip, clientId2) => {
         if (songData.status.code == 3015) {
             scanningBlockedAll = true;
         } else if (songData.status.code == 1001) {
-            return null;
+            return true;
         }
 
-        return songData;
+        return false;
     }
 
     clip.song = songData.metadata.music[0];

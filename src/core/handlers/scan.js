@@ -37,9 +37,11 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         await Promise.all(clips.map(async (clip) => {
             if (storedSlugs[clip.id]) return;
 
-            const songData = await identifyClip(clip, clientId2); // Will also return songData on ACRCloud real error
+            const songData = await identifyClip(clip, clientId2);
 
-            newDocuments.push(makeDocumentFromClip(clip));
+            if (songData !== undefined) {
+                newDocuments.push(makeDocumentFromClip(clip));
+            }
             // send(format(clip));
         }));
 
