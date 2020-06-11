@@ -156,7 +156,10 @@ let scanningBlockedAll = false;
 // Add metadata to clip
 // Return full song data (or null if stopped midway)
 export const identifyClip = async (clip, clientId2) => {
-    if (scanningBlockedAll) return false;
+    if (scanningBlockedAll) {
+        console.log(clip.id, 'CANCELLING SCAN');
+        return false;
+    }
 
     const fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
     const fingerExistsAlready = fs.existsSync(fingerPath);
@@ -171,7 +174,7 @@ export const identifyClip = async (clip, clientId2) => {
 
     await downloadFile(clip.mp4Url, clip.mp4Path);
 
-    const failed = await fingerprint(123, clip.mp4Name);
+    const failed = await fingerprint(clip.id, clip.mp4Name);
 
     fs.unlinkSync(clip.mp4Path);
 
@@ -181,7 +184,7 @@ export const identifyClip = async (clip, clientId2) => {
     }
 
     // const songData = { status: { code: 1001 } };
-    const songData = await identify(456, fingerPath);
+    const songData = await identify(clip.id, fingerPath);
 
     if (songData.status.code != 0) {
         if (songData.status.code == 3015) {
@@ -190,6 +193,7 @@ export const identifyClip = async (clip, clientId2) => {
             return true;
         }
 
+        console.log(clip.id, 'NOT STORING - BAD ERROR');
         return false;
     }
 

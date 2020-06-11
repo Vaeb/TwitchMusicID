@@ -31,8 +31,6 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         const clipRecords = await clipsStored(clips, clipsCollection);
         const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
 
-        console.log(storedSlugs);
-
         const newDocuments = [];
         await Promise.all(clips.map(async (clip) => {
             if (storedSlugs[clip.id]) return;
