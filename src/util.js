@@ -26,12 +26,13 @@ export const chunkBy = (arr, size) => arr.reduce((all, one, i) => {
     return all;
 }, []);
 
-export const makeDocumentFromClip = (clip) => {
+export const makeDocumentFromClip = (clip, identified = false) => {
     const clipDocument = {
         slug: clip.id,
         creationStamp: +clip.creationDate,
         views: clip.views,
         channel: 'buddha',
+        identified,
     };
 
     if (clip.fingerprintFailed) {

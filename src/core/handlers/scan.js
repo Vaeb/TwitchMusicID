@@ -17,10 +17,13 @@ const delayTime = 1000 * 3;
 const batches = 1;
 
 const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
-    startStamp = undefined; endStamp = undefined;
+    // startStamp = undefined; endStamp = undefined;
     send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
 
     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
+
+    const newDocuments = [];
+    const seenClips = {};
 
     let clips;
     let page = 0;
@@ -28,44 +31,26 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
         page++;
         console.log('\n\nChecking page', page);
 
-        const clipRecords = await clipsStored(clips, clipsCollection);
-        const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
-
-        const newDocuments = [];
-
-        const clipChunks = chunkBy(clips, chunkSize);
-
-        for (let i = 0; i < clipChunks.length; i++) {
-            const clipsSubset = clipChunks[i];
-            let didScan = false;
-
-            await Promise.all(clipsSubset.map(async (clip) => {
-                if (storedSlugs[clip.id]) return;
-
-                const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
-
-                if (songData) {
-                    newDocuments.push(makeDocumentFromClip(clip));
-                    didScan = didScan || typeof songData === 'object';
-                }
-                // send(format(clip));
-            }));
-
-            if (didScan) {
-                await delay(delayTime);
+        for (let i = 0; i < clips.length; i++) {
+            const clip = clips[i];
+            if (!seenClips[clip.id]) {
+                seenClips[clip.id] = true;
+                newDocuments.push(makeDocumentFromClip(clip, false));
             }
         }
 
         console.log('newDocuments', newDocuments);
         console.log('Added', newDocuments.length, 'new clips to db');
 
-        if (newDocuments.length > 0) {
-            clipsCollection.insertMany(newDocuments, { ordered: false });
-        }
-
         send('Checked page', page);
 
         // if (page >= 2) return;
+
+        await delay(delayTime);
+    }
+
+    if (newDocuments.length > 0) {
+        clipsCollection.insertMany(newDocuments, { ordered: false }); // When ordered is false duplicate slugs erroring won't affect the other documents
     }
 };
 
