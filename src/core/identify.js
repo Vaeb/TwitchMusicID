@@ -30,13 +30,13 @@ export const fingerprint = async (idNum, fileName) => {
         );
 
         if (stderr && stderr.includes('create fingerprint error ')) {
-            console.log('>', idNum, '[fingerprint] stderr:', stderr);
+            console.log('###', idNum, '[fingerprint] stderr:', stderr);
             return { error: stderr };
         }
 
         return false;
     } catch (err) {
-        console.log('>', idNum, '[fingerprint] Error:', err);
+        console.log('###', idNum, '[fingerprint] Error:', err);
         return true;
     }
 };
@@ -87,19 +87,19 @@ function upload(data) {
 
 export const identify = async (idNum, filePath) => {
     // filePath = './src/mp4/Holiday.mp3.cli.lo';
-    console.log('>', idNum, 'Identifying', filePath);
+    console.log('+ Identifying music in', idNum, filePath);
 
     const bitmap = fs.readFileSync(filePath);
 
     try {
         const response = await upload(Buffer.from(bitmap));
-        console.log('>', idNum, 'Response:', response, response.status.code == 0 ? response.metadata.music.map(song => `<${song.score}>`).join(', ') : '');
+        console.log('++ ACRCloud Response for', idNum, ':', response, response.status.code == 0 ? response.metadata.music.map(song => `<${song.score}>`).join(', ') : '');
 
         // if (response.status.code != 0) return false;
 
         return response;
     } catch (err) {
-        console.log('>', idNum, '[identify] Error:', err);
+        console.log('###', idNum, '[identify] Error:', err);
         return null;
     }
 };
@@ -157,17 +157,17 @@ let scanningBlockedAll = false;
 // Return full song data (or null if stopped midway)
 export const identifyClip = async (clip, clientId2) => {
     if (scanningBlockedAll) {
-        console.log(clip.id, 'CANCELLING SCAN');
+        console.log('[CANCELLING SCAN]', clip.id);
         return false;
     }
 
     const fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
     const fingerExistsAlready = fs.existsSync(fingerPath);
     if (fingerExistsAlready) { // Fingerprint could exist from a failed identify
-        console.log('Fingerprint already exists for', clip.id);
+        console.log('>> Fingerprint already exists for', clip.id);
         // return true; // undefined
     } else {
-        console.log('No cached fingerprint for', clip.id);
+        console.log('> No cached fingerprint for', clip.id);
     }
 
     await fetchMp4Data(clip, clientId2);
@@ -193,7 +193,7 @@ export const identifyClip = async (clip, clientId2) => {
             return true;
         }
 
-        console.log(clip.id, 'NOT STORING - BAD ERROR');
+        console.log('### NOT STORING - BAD ERROR', clip.id);
         return false;
     }
 
