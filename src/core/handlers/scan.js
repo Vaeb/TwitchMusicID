@@ -94,14 +94,19 @@ export default {
         const clipsCollection = db.collection('clips');
         let oldestStartDate;
 
-        try {
-            console.log('Fetching oldest clip date');
-            oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
-            console.log('Found oldest clip date:', oldestStartDate, dString(new Date(oldestStartDate)));
-        } catch (err) {
-            console.log('Failed to fetch oldest clip date:', err);
-            return;
+        for (let i = 0; i < 5; i++) {
+            try {
+                console.log('Fetching oldest clip date');
+                oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
+                console.log('Found oldest clip date:', oldestStartDate, dString(new Date(oldestStartDate)));
+                break;
+            } catch (err) {
+                console.log(i, 'Failed to fetch oldest clip date:', err);
+                await delay(1000 * 3);
+            }
         }
+
+        if (oldestStartDate === undefined) return;
 
         // let timeframeSize = 1000 * 60 * 80;
         let timeframeSize = 1000 * 60 * 60 * 24 * 4;
@@ -124,7 +129,7 @@ export default {
                         await scan(clientId2, clipsCollection, send, startStampNow, endStampNow); // Get up to 10 pages of clips
                         break;
                     } catch (err) {
-                        console.log('Caught scan error:', err);
+                        console.log(i, 'Caught scan error:', err);
                         await delay(1000 * 3);
                     }
                 }
