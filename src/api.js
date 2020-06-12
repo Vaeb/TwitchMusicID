@@ -9,8 +9,8 @@ import { dbPromise } from './db.js';
 (async () => {
     const db = await dbPromise;
 
-    const httpPort = 3000;
-    const httpsPort = 3000;
+    const httpPort = 3030;
+    const httpsPort = 3030;
 
     const app = express();
 
