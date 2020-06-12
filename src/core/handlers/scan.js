@@ -147,7 +147,7 @@ export default {
 
             batchNum++;
             let startStampNow = +new Date();
-            // if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;
+            if (batchNum === 1) startStampNow = +new Date('2019-03-14 18:05:52') + timeframeBetween;
             // if (batchNum < 4) continue;
 
             send('\n\nStarting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
@@ -161,11 +161,14 @@ export default {
                 for (let i = 0; i < 6; i++) {
                     try {
                         const numAdded = await scan(clientId2, clipsCollection, send, startStampNow, endStampNow, isCheckingDb); // Get up to 10 pages of clips
-                        if (isCheckingDb && numAdded > 0) isCheckingDb = false;
+                        if (isCheckingDb && numAdded > 0) {
+                            isCheckingDb = false;
+                        }
                         break;
                     } catch (err) {
                         console.log('\n', i, 'Caught scan error:', err);
                         await delay(1000 * 3);
+                        send('Scan failed, retrying');
                     }
                 }
                 // return;

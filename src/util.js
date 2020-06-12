@@ -44,7 +44,7 @@ export const chunkBy = (arr, size) => arr.reduce((all, one, i) => {
 export const makeDocumentFromClip = (clip, identified = false) => {
     const clipDocument = {
         slug: clip.id,
-        creationStamp: +clip.creationDate,
+        creationStamp: clip.creationStamp || +clip.creationDate,
         views: clip.views,
         channel: 'buddha',
         identified,
