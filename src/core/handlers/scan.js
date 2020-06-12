@@ -13,10 +13,10 @@ const pages = 1; // <= 100 clips
 const skipPages = 0;
 const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
 const chunkSize = 3;
-const delayTime = 1000 * 1; // 1000 * 3
+const delayTime = 1000 * 0.5; // 1000 * 3
 const batches = 1;
 
-const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
+const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCheckingDb) => {
     // startStamp = undefined; endStamp = undefined;
     send('\n\nScanning between', dString(new Date(startStamp)), 'and', dString(new Date(endStamp)), '...');
 
@@ -25,27 +25,40 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
     const newDocuments = [];
     const seenClips = {};
 
+    let addedSome = false;
+
     let clips;
     let page = 0;
     while ((clips = await clipPages.getNext()).length) {
         page++;
         console.log('\n\nChecking page', page);
 
+        if (isCheckingDb) {
+            console.log('Checking db for existing clips');
+            const clipRecords = await clipsStored(clips, clipsCollection);
+            for (let i = 0; i < clipRecords.length; i++) {
+                seenClips[clipRecords.slug] = true;
+            }
+        }
+
         for (let i = 0; i < clips.length; i++) {
             const clip = clips[i];
             if (!seenClips[clip.id]) {
                 seenClips[clip.id] = true;
                 newDocuments.push(makeDocumentFromClip(clip, false));
+                addedSome = true;
             }
         }
 
         console.log('Added', newDocuments.length, 'new clips to db', newDocuments[newDocuments.length - 1]);
 
-        await delay(delayTime);
+        if (addedSome) await delay(delayTime);
 
-        send('Checked page', page);
+        console.log('Checked page', page);
         // if (page >= 2) return;
     }
+
+    send('Checked', page, `page${page > 1 ? 's' : ''}`);
 
     if (newDocuments.length > 0) {
         try {
@@ -56,6 +69,8 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
     }
 
     console.log('Finished batch');
+
+    return newDocuments.length;
 };
 
 const findOldestClipDate = async () => {
@@ -120,16 +135,19 @@ export default {
 
             send('\n\nStarting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
 
+            let isCheckingDb = true;
+
             while (startStampNow > oldestStartDate) {
                 startStampNow -= timeframeBetween;
                 const endStampNow = startStampNow + timeframeSize;
 
                 for (let i = 0; i < 5; i++) {
                     try {
-                        await scan(clientId2, clipsCollection, send, startStampNow, endStampNow); // Get up to 10 pages of clips
+                        const numAdded = await scan(clientId2, clipsCollection, send, startStampNow, endStampNow, isCheckingDb); // Get up to 10 pages of clips
+                        if (isCheckingDb && numAdded > 0) isCheckingDb = false;
                         break;
                     } catch (err) {
-                        console.log(i, 'Caught scan error:', err);
+                        console.log('\n', i, 'Caught scan error:', err);
                         await delay(1000 * 3);
                     }
                 }
