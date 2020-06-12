@@ -128,7 +128,7 @@ export default {
         const clipsCollection = db.collection('clips');
 
         const searchLimit = 20000;
-        const batchSize = 5;
+        const batchSize = 4;
         let clipsChecked = 0;
         let batchNum = 0;
 
