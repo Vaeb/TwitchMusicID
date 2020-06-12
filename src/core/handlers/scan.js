@@ -34,13 +34,13 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
         page++;
         console.log('\n\nChecking page', page);
 
-        if (isCheckingDb) {
+        // if (isCheckingDb) {
             console.log('Checking db for existing clips');
             const clipRecords = await clipsStored(clips, clipsCollection);
             for (let i = 0; i < clipRecords.length; i++) {
                 seenClips[clipRecords[i].slug] = true;
             }
-        }
+        // }
 
         for (let i = 0; i < clips.length; i++) {
             const clip = clips[i];
