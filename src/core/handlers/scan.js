@@ -118,7 +118,7 @@ export default {
             let startStampNow = +new Date();
             if (batchNum === 1) startStampNow = 1560477079000 + timeframeBetween;
 
-            send('Starting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
+            send('\n\nStarting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
 
             while (startStampNow > oldestStartDate) {
                 startStampNow -= timeframeBetween;
@@ -136,7 +136,7 @@ export default {
                 // return;
             }
 
-            send('Completed batch scan', batchNum);
+            send('\nCompleted batch scan', batchNum);
 
             timeframeSize = Math.floor(timeframeSize / 2);
             timeframeBetween = timeframeSize;
