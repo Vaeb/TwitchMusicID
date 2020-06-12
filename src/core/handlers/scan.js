@@ -51,7 +51,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
             }
         }
 
-        console.log('Added', newDocuments.length, 'new clips to db', newDocuments[newDocuments.length - 1]);
+        console.log('Adding', newDocuments.length, 'new clips to db', newDocuments[newDocuments.length - 1]);
 
         if (addedSome) await delay(delayTime1);
 
@@ -64,6 +64,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
     if (newDocuments.length > 0) {
         try {
             clipsCollection.insertMany(newDocuments, { ordered: false }); // When ordered is false duplicate slugs erroring won't affect the other documents
+            console.log('Inserting documents now!');
         } catch (err) {
             console.log('Got a mongo error (expected?):', err);
         }
@@ -132,7 +133,7 @@ export default {
         while (timeframeSize >= 1000 * 60 * 5) {
             batchNum++;
             let startStampNow = +new Date();
-            if (batchNum === 1) startStampNow = 1560477079000 + timeframeBetween;
+            if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;
 
             send('\n\nStarting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
 
@@ -142,7 +143,7 @@ export default {
                 startStampNow -= timeframeBetween;
                 const endStampNow = startStampNow + timeframeSize;
 
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 6; i++) {
                     try {
                         const numAdded = await scan(clientId2, clipsCollection, send, startStampNow, endStampNow, isCheckingDb); // Get up to 10 pages of clips
                         if (isCheckingDb && numAdded > 0) isCheckingDb = false;
