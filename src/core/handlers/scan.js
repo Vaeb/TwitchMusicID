@@ -97,7 +97,8 @@ export default {
         const oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
         console.log('Found oldest clip date:', oldestStartDate);
 
-        let timeframeSize = 1000 * 60 * 80;
+        // let timeframeSize = 1000 * 60 * 80;
+        let timeframeSize = 1000 * 60 * 60 * 24 * 4;
         let timeframeBetween = timeframeSize;
 
         while (timeframeSize >= 1000 * 60 * 5) {
