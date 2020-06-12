@@ -13,7 +13,8 @@ const pages = 1; // <= 100 clips
 const skipPages = 0;
 const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
 const chunkSize = 3;
-const delayTime = 1000 * 0.5; // 1000 * 3
+const delayTime1 = 1000 * 0.1; // 1000 * 3
+const delayTime2 = 1000 * 0.6; // 1000 * 3
 const batches = 1;
 
 const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCheckingDb) => {
@@ -52,7 +53,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
 
         console.log('Added', newDocuments.length, 'new clips to db', newDocuments[newDocuments.length - 1]);
 
-        if (addedSome) await delay(delayTime);
+        if (addedSome) await delay(delayTime1);
 
         console.log('Checked page', page);
         // if (page >= 2) return;
@@ -67,6 +68,8 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
             console.log('Got a mongo error (expected?):', err);
         }
     }
+
+    await delay(delayTime2);
 
     return newDocuments.length;
 };
