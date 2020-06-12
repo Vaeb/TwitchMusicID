@@ -128,9 +128,9 @@ export default {
         // let timeframeSizeOriginal = 1000 * 60 * 80;
         let timeframeSizeOriginal = 1000 * 60 * 60 * 24 * 8;
         let timeframeBetweenOriginal = timeframeSizeOriginal;
-        const timeframes = [];
+        const timeframes = [[timeframeSizeOriginal, timeframeBetweenOriginal]];
 
-        while (timeframeSizeOriginal >= 1000 * 60 * 5) {
+        while (timeframeSizeOriginal > 1000 * 60 * 5) {
             timeframeSizeOriginal = Math.floor(timeframeSizeOriginal / 2);
             timeframeBetweenOriginal = timeframeSizeOriginal;
             timeframes.push([timeframeSizeOriginal, timeframeBetweenOriginal]);
@@ -139,6 +139,8 @@ export default {
         console.log('timeframes', timeframes);
 
         let batchNum = 0;
+
+        // return;
 
         for (let timeframe = 0; timeframe < timeframes.length; timeframe++) {
             const [timeframeSize, timeframeBetween] = timeframes[timeframe];
