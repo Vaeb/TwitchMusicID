@@ -1,5 +1,6 @@
 import { chatClientPromise, getConnectedResolve } from './setup.js';
 import './db.js';
+import './api.js';
 import './core/events.js';
 
 (async () => {

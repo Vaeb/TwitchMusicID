@@ -105,7 +105,7 @@ export const identify = async (idNum, filePath) => {
 };
 
 export const clipsStored = async (clips, clipsCollection = getDb().collection('clips')) => {
-    const clipRecords = await clipsCollection.find({ slug: { $in: clips.map(clip => clip.id) } }, { slug: 1, _id: 0 }).toArray();
+    const clipRecords = await clipsCollection.find({ slug: { $in: clips.map(clip => clip.id) } }).project({ slug: 1, _id: 0 }).toArray();
     return clipRecords;
 };
 
