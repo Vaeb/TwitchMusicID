@@ -37,7 +37,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
             console.log('Checking db for existing clips');
             const clipRecords = await clipsStored(clips, clipsCollection);
             for (let i = 0; i < clipRecords.length; i++) {
-                seenClips[clipRecords.slug] = true;
+                seenClips[clipRecords[i].slug] = true;
             }
         }
 
@@ -67,8 +67,6 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
             console.log('Got a mongo error (expected?):', err);
         }
     }
-
-    console.log('Finished batch');
 
     return newDocuments.length;
 };

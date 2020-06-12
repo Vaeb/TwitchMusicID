@@ -15,7 +15,17 @@ export const dString = (date = new Date()) => {
 export const sendMessage = (chatClient, channel, ...messages) => {
     let message = messages.join(' ');
     if (message.length > 499) message = `${message.substr(0, 496)}...`;
-    console.log(`[${dString()}]`, message);
+
+    let logMessage;
+    const dateString = dString();
+    if (message[0] === '\n') {
+        const startingWs = message.match(/\n+/)[0];
+        logMessage = `${startingWs}[${dateString}] ${message.substring(startingWs.length)}`;
+    } else {
+        logMessage = `[${dateString}] ${message}`;
+    }
+
+    console.log(logMessage);
     return chatClient.say(channel, message);
 };
 
