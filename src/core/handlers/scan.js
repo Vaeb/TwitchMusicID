@@ -13,11 +13,11 @@ const pages = 1; // <= 100 clips
 const skipPages = 0;
 const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
 const chunkSize = 3;
-const delayTime = 1000 * 3;
+const delayTime = 1000 * 1; // 1000 * 3
 const batches = 1;
 
 const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
-    startStamp = undefined; endStamp = undefined;
+    // startStamp = undefined; endStamp = undefined;
     send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
 
     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
