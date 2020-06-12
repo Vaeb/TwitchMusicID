@@ -18,58 +18,58 @@ const chunkSize = 3;
 const delayTime = 1000 * 3;
 const batches = 1;
 
-const identifyClipsArray = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
-    startStamp = undefined; endStamp = undefined;
-    send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
+// const identifyClipsArray = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
+//     startStamp = undefined; endStamp = undefined;
+//     send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
 
-    const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
+//     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
 
-    let clips;
-    let page = 0;
-    while ((clips = await clipPages.getNext()).length) {
-        page++;
-        console.log('\n\nChecking page', page);
+//     let clips;
+//     let page = 0;
+//     while ((clips = await clipPages.getNext()).length) {
+//         page++;
+//         console.log('\n\nChecking page', page);
 
-        const clipRecords = await clipsStored(clips, clipsCollection);
-        const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
+//         const clipRecords = await clipsStored(clips, clipsCollection);
+//         const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
 
-        const newDocuments = [];
+//         const newDocuments = [];
 
-        const clipChunks = chunkBy(clips, chunkSize);
+//         const clipChunks = chunkBy(clips, chunkSize);
 
-        for (let i = 0; i < clipChunks.length; i++) {
-            const clipsSubset = clipChunks[i];
-            let didScan = false;
+//         for (let i = 0; i < clipChunks.length; i++) {
+//             const clipsSubset = clipChunks[i];
+//             let didScan = false;
 
-            await Promise.all(clipsSubset.map(async (clip) => {
-                if (storedSlugs[clip.id]) return;
+//             await Promise.all(clipsSubset.map(async (clip) => {
+//                 if (storedSlugs[clip.id]) return;
 
-                const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
+//                 const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
 
-                if (songData) {
-                    newDocuments.push(makeDocumentFromClip(clip));
-                    didScan = didScan || typeof songData === 'object';
-                }
-                // send(format(clip));
-            }));
+//                 if (songData) {
+//                     newDocuments.push(makeDocumentFromClip(clip));
+//                     didScan = didScan || typeof songData === 'object';
+//                 }
+//                 // send(format(clip));
+//             }));
 
-            if (didScan) {
-                await delay(delayTime);
-            }
-        }
+//             if (didScan) {
+//                 await delay(delayTime);
+//             }
+//         }
 
-        console.log('newDocuments', newDocuments);
-        console.log('Added', newDocuments.length, 'new clips to db');
+//         console.log('newDocuments', newDocuments);
+//         console.log('Added', newDocuments.length, 'new clips to db');
 
-        if (newDocuments.length > 0) {
-            clipsCollection.insertMany(newDocuments, { ordered: false });
-        }
+//         if (newDocuments.length > 0) {
+//             clipsCollection.insertMany(newDocuments, { ordered: false });
+//         }
 
-        send('Checked page', page);
+//         send('Checked page', page);
 
-        // if (page >= 2) return;
-    }
-};
+//         // if (page >= 2) return;
+//     }
+// };
 
 const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, batchNum) => {
     let numAppeared = 0;
@@ -87,16 +87,18 @@ const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, bat
 
             console.log(`[${batchNum}]`, 'Identifying top clip:', clipRecord.slug);
 
-            await identifyClip(clipRecord, clientId2); // songData on success+music, true on success+no_music, false on failure
+            const songData = await identifyClip(clipRecord, clientId2); // songData on success+music, true on success+no_music, false on failure
 
             console.log(`[${batchNum}]`, 'Results found for clip', clipRecord.slug, '>>>', clipRecord.song, '>', clipRecord.fingerprintFailed);
 
-            bulkWrites.push({
-                replaceOne: {
-                    filter: { slug: clipRecord.slug },
-                    replacement: makeDocumentFromClip(clipRecord, true),
-                },
-            });
+            if (songData) { // songData means no error
+                bulkWrites.push({
+                    replaceOne: {
+                        filter: { slug: clipRecord.slug },
+                        replacement: makeDocumentFromClip(clipRecord, true),
+                    },
+                });
+            }
 
             delete recordsActive[clipRecord.slug];
             if (numAppeared >= batchSize && Object.keys(recordsActive).length === 0) {
@@ -126,7 +128,7 @@ export default {
         const clipsCollection = db.collection('clips');
 
         const searchLimit = 20000;
-        const batchSize = 8;
+        const batchSize = 5;
         let clipsChecked = 0;
         let batchNum = 0;
 
