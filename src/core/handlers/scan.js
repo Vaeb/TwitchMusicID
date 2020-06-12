@@ -48,7 +48,11 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
     }
 
     if (newDocuments.length > 0) {
-        clipsCollection.insertMany(newDocuments, { ordered: false }); // When ordered is false duplicate slugs erroring won't affect the other documents
+        try {
+            clipsCollection.insertMany(newDocuments, { ordered: false }); // When ordered is false duplicate slugs erroring won't affect the other documents
+        } catch (err) {
+            console.log('Got a mongo error (expected?):', err);
+        }
     }
 
     console.log('Finished batch');
