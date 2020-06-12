@@ -5,7 +5,7 @@ import { format } from 'util';
 import axios from 'axios';
 
 import { fetchAuth } from '../../setup.js';
-import { delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip, dString } from '../../util.js';
+import { delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip, dString, dBritain } from '../../util.js';
 import { clipsStored, identifyClip } from '../identification.js';
 import { dbPromise } from '../../db.js';
 
@@ -126,7 +126,7 @@ export default {
         if (oldestStartDate === undefined) return;
 
         // let timeframeSizeOriginal = 1000 * 60 * 80;
-        let timeframeSizeOriginal = 1000 * 60 * 60 * 24 * 4;
+        let timeframeSizeOriginal = 1000 * 60 * 60 * 24 * 8;
         let timeframeBetweenOriginal = timeframeSizeOriginal;
         const timeframes = [];
 
@@ -136,9 +136,13 @@ export default {
             timeframes.push([timeframeSizeOriginal, timeframeBetweenOriginal]);
         }
 
+        console.log('timeframes', timeframes);
+
         let batchNum = 0;
 
-        for (const [timeframeSize, timeframeBetween] of timeframes) {
+        for (let timeframe = 0; timeframe < timeframes.length; timeframe++) {
+            const [timeframeSize, timeframeBetween] = timeframes[timeframe];
+
             batchNum++;
             let startStampNow = +new Date();
             // if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;

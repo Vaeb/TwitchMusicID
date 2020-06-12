@@ -6,9 +6,11 @@ import { fetchTwitchClient, fetchChatClient } from './setup.js';
 // export const tzOffset = 1000 * 60 * (new Date()).getTimezoneOffset();
 export const tzOffset = 1000 * 60 * -60;
 
+export const dBritain = (date = new Date()) => new Date(date.getTime() - tzOffset);
+
 // export const dString = date => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 export const dString = (date = new Date()) => {
-    const iso = new Date(date.getTime() - tzOffset).toISOString();
+    const iso = dBritain(date).toISOString();
     return `${iso.substr(0, 10)} ${iso.substr(11, 8)}`;
 };
 
