@@ -183,7 +183,8 @@ export const identifyClip = async (clip, clientId2) => {
         return true;
     }
 
-    // const songData = { status: { code: 1001 } };
+    // if (clip.id[0] > 'K') return true;
+    // const songData = { status: { code: 0 }, metadata: { music: [{ title: 'test_title', label: 'test_label', artists: ['test_artist'] }] } };
     const songData = await identify(clip.id, fingerPath);
 
     if (songData.status.code != 0) {

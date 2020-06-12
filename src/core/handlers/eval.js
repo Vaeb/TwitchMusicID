@@ -1,10 +1,12 @@
-import util from 'util';
-import { execFile } from 'child_process';
+const util = require('util');
+const childProcess = require('child_process');
 
 const setupMod = require('../../setup.js');
 const dbMod = require('../../db.js');
 const utilMod = require('../../util.js');
 
+const { format } = util;
+const { execFile } = childProcess;
 const { dbPromise } = dbMod;
 const { sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById, dString } = utilMod;
 
@@ -31,11 +33,11 @@ export default {
             console.log('Eval result:', result);
 
             if (result !== undefined) {
-                send(`Output: ${util.format(result)}`);
+                send(`Output: ${format(result)}`);
             }
         } catch (err) {
             console.log('Eval Error:', err);
-            send(`Error: ${util.format(err)}`);
+            send(`Error: ${format(err)}`);
         }
     },
 };

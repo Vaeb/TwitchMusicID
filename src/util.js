@@ -1,4 +1,5 @@
 import fs from 'fs';
+import util from 'util';
 import download from 'download';
 
 import { fetchTwitchClient, fetchChatClient } from './setup.js';
@@ -15,7 +16,7 @@ export const dString = (date = new Date()) => {
 };
 
 export const sendMessage = (chatClient, channel, ...messages) => {
-    let message = messages.join(' ');
+    let message = messages.map(msg => util.format(msg)).join(' ');
     if (message.length > 499) message = `${message.substr(0, 496)}...`;
 
     let logMessage;
@@ -44,7 +45,7 @@ export const chunkBy = (arr, size) => arr.reduce((all, one, i) => {
 export const makeDocumentFromClip = (clip, identified = false) => {
     const clipDocument = {
         slug: clip.id,
-        creationStamp: clip.creationStamp || +clip.creationDate,
+        creationStamp: clip.creationStamp || +new Date(clip.creationDate),
         views: clip.views,
         channel: 'buddha',
         identified,

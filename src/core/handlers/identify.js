@@ -71,25 +71,45 @@ const identifyClipsArray = async (clientId2, clipsCollection, send, startStamp, 
     }
 };
 
-const identifyTopClips = (clientId2, clipsCollection) => {
-    const searchLimit = 10;
+const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, batchNum) => {
     let numAppeared = 0;
     const recordsActive = {};
+    const bulkWrites = [];
 
-    return new Promise((resolve) => {
-        clipsCollection.find({ identified: false }).sort({ views: -1 }).limit(10).forEach(async (clipRecord) => {
+    send('\n\n---\nStarting new batch:', batchNum);
+    console.log('');
+
+    await new Promise((resolve) => { // When promise resolves, all batchSize records should be updated to `identified: true`
+        clipsCollection.find({ identified: false }).sort({ views: -1 }).limit(batchSize).forEach(async (clipRecord) => {
             recordsActive[clipRecord.slug] = true;
             numAppeared++;
+            clipRecord.id = clipRecord.slug;
 
-            console.log(clipRecord.slug);
+            console.log(`[${batchNum}]`, 'Identifying top clip:', clipRecord.slug);
+
+            await identifyClip(clipRecord, clientId2); // songData on success+music, true on success+no_music, false on failure
+
+            console.log(`[${batchNum}]`, 'Results found for clip', clipRecord.slug, '>>>', clipRecord.song, '>', clipRecord.fingerprintFailed);
+
+            bulkWrites.push({
+                replaceOne: {
+                    filter: { slug: clipRecord.slug },
+                    replacement: makeDocumentFromClip(clipRecord, true),
+                },
+            });
 
             delete recordsActive[clipRecord.slug];
-            if (numAppeared >= searchLimit && Object.keys(recordsActive).length === 0) {
-                console.log('Resolving');
+            if (numAppeared >= batchSize && Object.keys(recordsActive).length === 0) {
                 resolve(true);
             }
         });
     });
+
+    send(`\n[${batchNum}] Batch completed, processing ${bulkWrites.length} bulk-writes`);
+
+    if (bulkWrites.length > 0) {
+        await clipsCollection.bulkWrite(bulkWrites, { ordered: false });
+    }
 };
 
 export default {
@@ -97,15 +117,24 @@ export default {
     desc: 'Identify music in the top stored clips',
     params: [],
 
-    func: async ({ twitchClient, send, channel }) => {
-        send('Identifying top clips...');
+    func: async ({ twitchClient, send }) => {
+        send('\nIdentifying top clips...');
 
         const { clientId2 } = await fetchAuth();
 
         const db = await dbPromise;
         const clipsCollection = db.collection('clips');
 
-        await identifyTopClips(clientId2, clipsCollection);
+        const searchLimit = 9;
+        const batchSize = 3;
+        let clipsChecked = 0;
+        let batchNum = 0;
+
+        while ((clipsChecked + batchSize) <= searchLimit) {
+            batchNum++;
+            await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
+            clipsChecked += batchSize;
+        }
 
         send('Finished identifying!');
     },
