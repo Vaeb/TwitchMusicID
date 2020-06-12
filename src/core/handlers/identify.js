@@ -117,7 +117,7 @@ export default {
     desc: 'Identify music in the top stored clips',
     params: [],
 
-    func: async ({ twitchClient, send }) => {
+    func: async ({ send }) => {
         send('\nIdentifying top clips...');
 
         const { clientId2 } = await fetchAuth();
@@ -125,14 +125,15 @@ export default {
         const db = await dbPromise;
         const clipsCollection = db.collection('clips');
 
-        const searchLimit = 9;
-        const batchSize = 3;
+        const searchLimit = 20000;
+        const batchSize = 10;
         let clipsChecked = 0;
         let batchNum = 0;
 
         while ((clipsChecked + batchSize) <= searchLimit) {
             batchNum++;
             await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
+            await delay(1000 * 3);
             clipsChecked += batchSize;
         }
 
