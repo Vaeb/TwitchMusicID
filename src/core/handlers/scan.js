@@ -5,7 +5,7 @@ import { format } from 'util';
 import axios from 'axios';
 
 import { fetchAuth } from '../../setup.js';
-import { delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip } from '../../util.js';
+import { delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip, dString } from '../../util.js';
 import { clipsStored, identifyClip } from '../identify.js';
 import { dbPromise } from '../../db.js';
 
@@ -18,7 +18,7 @@ const batches = 1;
 
 const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
     // startStamp = undefined; endStamp = undefined;
-    send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
+    send('\n\nScanning between', dString(new Date(startStamp)), 'and', dString(new Date(endStamp)), '...');
 
     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
 
@@ -95,7 +95,7 @@ export default {
 
         console.log('Fetching oldest clip date');
         const oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
-        console.log('Found oldest clip date:', oldestStartDate);
+        console.log('Found oldest clip date:', oldestStartDate, dString(new Date(oldestStartDate)));
 
         // let timeframeSize = 1000 * 60 * 80;
         let timeframeSize = 1000 * 60 * 60 * 24 * 4;
