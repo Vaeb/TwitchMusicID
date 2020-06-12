@@ -125,12 +125,20 @@ export default {
 
         if (oldestStartDate === undefined) return;
 
-        // let timeframeSize = 1000 * 60 * 80;
-        let timeframeSize = 1000 * 60 * 60 * 24 * 4;
-        let timeframeBetween = timeframeSize;
+        // let timeframeSizeOriginal = 1000 * 60 * 80;
+        let timeframeSizeOriginal = 1000 * 60 * 60 * 24 * 4;
+        let timeframeBetweenOriginal = timeframeSizeOriginal;
+        const timeframes = [];
+
+        while (timeframeSizeOriginal >= 1000 * 60 * 5) {
+            timeframeSizeOriginal = Math.floor(timeframeSizeOriginal / 2);
+            timeframeBetweenOriginal = timeframeSizeOriginal;
+            timeframes.push(timeframeSizeOriginal, timeframeBetweenOriginal);
+        }
+
         let batchNum = 0;
 
-        while (timeframeSize >= 1000 * 60 * 5) {
+        for (const [timeframeSize, timeframeBetween] of timeframes) {
             batchNum++;
             let startStampNow = +new Date();
             // if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;
@@ -158,9 +166,6 @@ export default {
             }
 
             send('\nCompleted batch scan', batchNum);
-
-            timeframeSize = Math.floor(timeframeSize / 2);
-            timeframeBetween = timeframeSize;
         }
 
         send('Scanned!');
