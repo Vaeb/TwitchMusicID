@@ -1,12 +1,12 @@
 import util from 'util';
 import { execFile } from 'child_process';
 
-const setupModule = require('../../setup.js');
-const dbModule = require('../../db.js');
-const utilModule = require('../../util.js');
+const setupMod = require('../../setup.js');
+const dbMod = require('../../db.js');
+const utilMod = require('../../util.js');
 
-const { dbPromise } = dbModule;
-const { sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById } = utilModule;
+const { dbPromise } = dbMod;
+const { sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById, dString } = utilMod;
 
 const execFileAsync = util.promisify(execFile);
 

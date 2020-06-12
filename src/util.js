@@ -10,7 +10,8 @@ export const sendMessage = (chatClient, channel, ...messages) => {
     return chatClient.say(channel, message);
 };
 
-export const tzOffset = 1000 * 60 * (new Date()).getTimezoneOffset();
+// export const tzOffset = 1000 * 60 * (new Date()).getTimezoneOffset();
+export const tzOffset = 1000 * 60 * -60;
 
 // export const dString = date => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 export const dString = (date) => {
