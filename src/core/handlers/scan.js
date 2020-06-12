@@ -92,10 +92,16 @@ export default {
 
         const db = await dbPromise;
         const clipsCollection = db.collection('clips');
+        let oldestStartDate;
 
-        console.log('Fetching oldest clip date');
-        const oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
-        console.log('Found oldest clip date:', oldestStartDate, dString(new Date(oldestStartDate)));
+        try {
+            console.log('Fetching oldest clip date');
+            oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
+            console.log('Found oldest clip date:', oldestStartDate, dString(new Date(oldestStartDate)));
+        } catch (err) {
+            console.log('Failed to fetch oldest clip date:', err);
+            return;
+        }
 
         // let timeframeSize = 1000 * 60 * 80;
         let timeframeSize = 1000 * 60 * 60 * 24 * 4;
