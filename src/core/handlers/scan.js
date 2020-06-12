@@ -39,19 +39,19 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
             }
         }
 
-        console.log('newDocuments', newDocuments);
-        console.log('Added', newDocuments.length, 'new clips to db');
-
-        send('Checked page', page);
-
-        // if (page >= 2) return;
+        console.log('Added', newDocuments.length, 'new clips to db', newDocuments[newDocuments.length - 1]);
 
         await delay(delayTime);
+
+        send('Checked page', page);
+        // if (page >= 2) return;
     }
 
     if (newDocuments.length > 0) {
         clipsCollection.insertMany(newDocuments, { ordered: false }); // When ordered is false duplicate slugs erroring won't affect the other documents
     }
+
+    console.log('Finished batch');
 };
 
 const findOldestClipDate = async () => {
