@@ -108,10 +108,14 @@ export default {
                 startStampNow -= timeframeBetween;
                 const endStampNow = startStampNow + timeframeSize;
 
-                try {
-                    await scan(clientId2, clipsCollection, send, startStampNow, endStampNow); // Get up to 10 pages of clips
-                } catch (err) {
-                    console.log('Caught scan error:', err);
+                for (let i = 0; i < 5; i++) {
+                    try {
+                        await scan(clientId2, clipsCollection, send, startStampNow, endStampNow); // Get up to 10 pages of clips
+                        break;
+                    } catch (err) {
+                        console.log('Caught scan error:', err);
+                        await delay(1000 * 3);
+                    }
                 }
                 // return;
             }
