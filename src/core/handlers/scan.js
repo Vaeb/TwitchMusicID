@@ -146,7 +146,7 @@ export default {
             batchNum++;
             let startStampNow = +new Date();
             // if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;
-            if (batchNum < 4) continue;
+            // if (batchNum < 4) continue;
 
             send('\n\nStarting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
 
