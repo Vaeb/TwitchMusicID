@@ -133,7 +133,7 @@ export default {
         while (timeframeSizeOriginal >= 1000 * 60 * 5) {
             timeframeSizeOriginal = Math.floor(timeframeSizeOriginal / 2);
             timeframeBetweenOriginal = timeframeSizeOriginal;
-            timeframes.push(timeframeSizeOriginal, timeframeBetweenOriginal);
+            timeframes.push([timeframeSizeOriginal, timeframeBetweenOriginal]);
         }
 
         let batchNum = 0;
