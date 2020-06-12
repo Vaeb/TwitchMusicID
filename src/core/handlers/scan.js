@@ -6,7 +6,7 @@ import axios from 'axios';
 
 import { fetchAuth } from '../../setup.js';
 import { delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip, dString } from '../../util.js';
-import { clipsStored, identifyClip } from '../identify.js';
+import { clipsStored, identifyClip } from '../identification.js';
 import { dbPromise } from '../../db.js';
 
 const pages = 1; // <= 100 clips
@@ -35,11 +35,11 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
         console.log('\n\nChecking page', page);
 
         // if (isCheckingDb) {
-            console.log('Checking db for existing clips');
-            const clipRecords = await clipsStored(clips, clipsCollection);
-            for (let i = 0; i < clipRecords.length; i++) {
-                seenClips[clipRecords[i].slug] = true;
-            }
+        console.log('Checking db for existing clips');
+        const clipRecords = await clipsStored(clips, clipsCollection);
+        for (let i = 0; i < clipRecords.length; i++) {
+            seenClips[clipRecords[i].slug] = true;
+        }
         // }
 
         for (let i = 0; i < clips.length; i++) {
@@ -55,7 +55,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
 
         if (addedSome) await delay(delayTime1);
 
-        console.log('Checked page', page);
+        console.log('Checked page', page, '||', 'Added', newDocuments.length, 'new clips');
         // if (page >= 2) return;
     }
 
@@ -133,7 +133,8 @@ export default {
         while (timeframeSize >= 1000 * 60 * 5) {
             batchNum++;
             let startStampNow = +new Date();
-            if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;
+            // if (batchNum === 1) startStampNow = 1557021079000 + timeframeBetween;
+            if (batchNum < 4) continue;
 
             send('\n\nStarting batch scan', batchNum, 'of size / offset:', timeframeSize, '/', timeframeBetween, '...');
 

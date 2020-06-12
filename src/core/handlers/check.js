@@ -5,7 +5,7 @@ import axios from 'axios';
 
 import { fetchAuth } from '../../setup.js';
 import { sendMessage, delay, chunkBy, downloadFile } from '../../util.js';
-import { fingerprint, identify } from '../identify.js';
+import { fingerprint, identify } from '../identification.js';
 
 // const useSearchPeriod = false;
 // const searchPeriod = 1000 * 60 * 60 * 24 * 7;
