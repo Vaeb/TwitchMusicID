@@ -148,7 +148,8 @@ export const fetchMp4Data = async (clip, clientId2) => {
     clip.mp4Path = `./src/mp4/${clip.mp4Name}`;
 };
 
-let scanningBlockedAll = false;
+let scanningBlockedAll = null;
+const resumeScanningAfter = 1000 * 3;
 
 // Extract mp4 for clip
 // Fingerprint mp4 audio
@@ -157,8 +158,12 @@ let scanningBlockedAll = false;
 // Return full song data (or null if stopped midway)
 export const identifyClip = async (clip, clientId2) => {
     if (scanningBlockedAll) {
-        console.log('[CANCELLING SCAN]', clip.id);
-        return false;
+        if (+new Date() > scanningBlockedAll) {
+            scanningBlockedAll = null;
+        } else {
+            console.log('[CANCELLING SCAN]', clip.id);
+            return false;
+        }
     }
 
     const fingerPath = `./src/mp4/${clip.id}.mp4.cli.lo`;
@@ -189,7 +194,7 @@ export const identifyClip = async (clip, clientId2) => {
 
     if (songData.status.code != 0) {
         if (songData.status.code == 3015) {
-            scanningBlockedAll = true;
+            scanningBlockedAll = +new Date() + resumeScanningAfter;
         } else if (songData.status.code == 1001) {
             return true;
         }

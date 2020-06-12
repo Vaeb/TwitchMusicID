@@ -107,11 +107,15 @@ const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, bat
         });
     });
 
-    send(`\n[${batchNum}] Batch completed, processing ${bulkWrites.length} bulk-writes`);
+    const numWrites = bulkWrites.length;
 
-    if (bulkWrites.length > 0) {
+    send(`\n[${batchNum}] Batch completed, processing ${numWrites} bulk-writes`);
+
+    if (numWrites > 0) {
         await clipsCollection.bulkWrite(bulkWrites, { ordered: false });
     }
+
+    return numWrites;
 };
 
 export default {
@@ -134,8 +138,8 @@ export default {
 
         while ((clipsChecked + batchSize) <= searchLimit) {
             batchNum++;
-            await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
-            await delay(1000 * 3);
+            const numResults = await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
+            await delay(numResults > 0 ? 1000 * 3 : 500);
             clipsChecked += batchSize;
         }
 
