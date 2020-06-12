@@ -55,11 +55,11 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
 
         if (addedSome) await delay(delayTime1);
 
-        console.log('Checked page', page, '||', 'Added', newDocuments.length, 'new clips');
+        console.log('Checked page', page);
         // if (page >= 2) return;
     }
 
-    send('Checked', page, `page${page > 1 ? 's' : ''}`);
+    send('Checked', page, `page${page > 1 ? 's' : ''}`, '||', 'Added', newDocuments.length, 'new clips');
 
     if (newDocuments.length > 0) {
         try {
