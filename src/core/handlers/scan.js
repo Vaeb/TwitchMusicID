@@ -13,7 +13,7 @@ const pages = 1; // <= 100 clips
 const skipPages = 0;
 const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
 const chunkSize = 3;
-const delayTime1 = 1000 * 0.5; // 1000 * 3
+const delayTime1 = 1000 * 1; // 1000 * 3
 const delayTime2 = 1000 * 0.1; // 1000 * 3
 const batches = 1;
 
