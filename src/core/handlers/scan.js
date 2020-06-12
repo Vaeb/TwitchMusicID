@@ -17,7 +17,7 @@ const delayTime = 1000 * 3;
 const batches = 1;
 
 const scan = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
-    // startStamp = undefined; endStamp = undefined;
+    startStamp = undefined; endStamp = undefined;
     send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
 
     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
