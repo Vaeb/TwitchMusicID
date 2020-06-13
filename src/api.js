@@ -22,7 +22,7 @@ import { dbPromise } from './db.js';
     app.get('/api/music-clips', async (req, res) => {
         try {
             console.log('API request received:', req.query);
-            const { channel, minimal } = req.query;
+            const { channel, minimal, unchecked } = req.query;
 
             if (!channel) {
                 return res.status(400).send({
@@ -42,14 +42,21 @@ import { dbPromise } from './db.js';
                 });
             }
 
+            let queryObj = {};
             let projectionObj = {};
 
             if (parseInt(minimal, 10)) {
                 projectionObj = { slug: 1, _id: 0 };
             }
 
+            if (parseInt(unchecked, 10)) {
+                queryObj = { channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }, { identified: false }] };
+            } else {
+                queryObj = { channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }] };
+            }
+
             const musicClips = await clipsCollection
-                .find({ channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }] })
+                .find(queryObj)
                 .project(projectionObj)
                 .sort({ views: -1 })
                 .toArray();
