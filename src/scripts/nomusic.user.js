@@ -197,6 +197,10 @@ const makeUi = () => {
         }
 
         body {
+            
+        }
+
+        body {
             height: 100vh;
         }
 
@@ -208,7 +212,6 @@ const makeUi = () => {
             justify-content: center;
             align-items: center;
             align-content: stretch;
-            margin-top: 10px;
         }
 
         div.loginName {
@@ -231,11 +234,18 @@ const makeUi = () => {
 
         div#output {
             position: absolute;
-            top: 65%;
+            top: 62%;
             left: 0%;
             width: 100%;
-            height: 25%;
+            height: 28%;
             background-color: lightgrey;
+            z-index: 99999;
+            border: 0;
+            margin: 0;
+            padding: 10px 5px 10px 5px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            font-size: 16px;
         }
     `);
 
@@ -262,23 +272,83 @@ const makeUi = () => {
 const output = (out) => {
     const $output = unsafeWindow.$('#output');
     $output.empty();
+    console.log($output);
     if (typeof out === 'string') {
         $output.text(out);
     } else {
-        $output.appendChild(out);
+        $output.append(...out);
     }
+};
+
+const shortenString = (str, len = 50) => {
+    if (str != null) {
+        return str.length <= len ? str : `${str.substr(0, len)}...`;
+    }
+
+    return '<N/A>';
+};
+
+const outputClips = (clips) => {
+    const out = [];
+
+    clips.forEach((clip) => {
+        const link = `https://clips.twitch.tv/${clip.slug}`;
+
+        const $clipDiv = unsafeWindow.$('<div>');
+
+        $clipDiv.append(
+            unsafeWindow.$('<a>').attr('href', link).text(link),
+            ' - ',
+            `${clip.views} views`
+        );
+
+        if (clip.song) {
+            $clipDiv.append(
+                ' --> ',
+                shortenString(clip.song.title, 60),
+                ' - ',
+                shortenString(clip.song.artists.map(artist => artist.name).join(' & '), 55),
+                ' - ',
+                shortenString(clip.song.label, 30)
+            );
+        }
+
+        $clipDiv.append(
+            unsafeWindow.$('<br>'),
+            unsafeWindow.$('<br>')
+        );
+
+        out.push($clipDiv);
+    });
+
+    output(out);
 };
 
 const makeUiLogic = () => {
     unsafeWindow.$('#list_music').click(async () => {
-        const clips = await unsafeWindow.$.ajax({
+        output('Fetching data, this may take a few seconds...');
+
+        const { clips } = await unsafeWindow.$.ajax({
+            type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
             url: `${apiUrl}/music-clips?channel=buddha`,
-            type: 'GET',
             dataType: 'json',
         });
 
-        output(JSON.stringify(clips, null, 2));
+        outputClips(clips);
+    });
+
+    unsafeWindow.$('#list_unchecked').click(async () => {
+        output('Fetching data, this may take a few seconds...');
+
+        const { clips } = await unsafeWindow.$.ajax({
+            type: 'GET',
+            // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
+            url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=100`,
+            dataType: 'json',
+        });
+
+        outputClips(clips);
     });
 };
 

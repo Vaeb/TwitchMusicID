@@ -1,3 +1,4 @@
+import util from 'util';
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
@@ -55,6 +56,7 @@ import { dbPromise } from './db.js';
             console.log('API request received:', query);
 
             if (!query.channel) {
+                console.log('/music-clips error 1');
                 return res.status(400).send({
                     success: false,
                     error: 'Missing required parameter: "channel"',
@@ -66,6 +68,7 @@ import { dbPromise } from './db.js';
             const hasClips = !!(await clipsCollection.find({ channel: query.channel }).limit(1).count(1));
 
             if (!hasClips) {
+                console.log('/music-clips error 2');
                 return res.status(400).send({
                     success: false,
                     error: `There are no clips in the database for channel "${query.channel}"`,
@@ -79,6 +82,7 @@ import { dbPromise } from './db.js';
             query.unchecked = parseInt(query.unchecked, 10);
             query.unchecked_only = parseInt(query.unchecked_only, 10);
             query.pretty = parseInt(query.pretty, 10);
+            query.limit = parseInt(query.limit, 10);
 
             if (query.minimal) {
                 projectionObj = { slug: 1, _id: 0 };
@@ -92,11 +96,14 @@ import { dbPromise } from './db.js';
                 queryObj = { channel: query.channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }] };
             }
 
-            const musicClips = await clipsCollection
+            let musicClipsCursor = clipsCollection
                 .find(queryObj)
                 .project(projectionObj)
-                .sort({ views: -1 })
-                .toArray();
+                .sort({ views: -1 });
+
+            if (query.limit) musicClipsCursor = musicClipsCursor.limit(query.limit);
+
+            const musicClips = await musicClipsCursor.toArray();
 
             if (!query.minimal) {
                 musicClips.forEach((clipRecord, i) => {
@@ -111,9 +118,10 @@ import { dbPromise } from './db.js';
                 clips: musicClips,
             });
         } catch (err) {
+            console.log('/music-clips error 3:', err);
             return res.status(400).send({
                 success: false,
-                error: err,
+                error: util.format(err),
             });
         }
     });
