@@ -22,7 +22,7 @@ import { dbPromise } from './db.js';
     app.get('/api/music-clips', async (req, res) => {
         try {
             console.log('API request received:', req.query);
-            const { channel, minimal, unchecked } = req.query;
+            let { channel, minimal, unchecked, pretty } = req.query;
 
             if (!channel) {
                 return res.status(400).send({
@@ -45,11 +45,15 @@ import { dbPromise } from './db.js';
             let queryObj = {};
             let projectionObj = {};
 
-            if (parseInt(minimal, 10)) {
+            minimal = parseInt(minimal, 10);
+            unchecked = parseInt(unchecked, 10);
+            pretty = parseInt(pretty, 10);
+
+            if (minimal) {
                 projectionObj = { slug: 1, _id: 0 };
             }
 
-            if (parseInt(unchecked, 10)) {
+            if (unchecked) {
                 queryObj = { channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }, { identified: false }] };
             } else {
                 queryObj = { channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }] };
@@ -61,10 +65,12 @@ import { dbPromise } from './db.js';
                 .sort({ views: -1 })
                 .toArray();
 
-            musicClips.forEach((clipRecord) => {
-                clipRecord.url = `https://clips.twitch.tv/${clipRecord.slug}`;
-            });
-
+            if (!minimal) {
+                musicClips.forEach((clipRecord, i) => {
+                    clipRecord.url = `https://clips.twitch.tv/${clipRecord.slug}`;
+                    if (!pretty) clipRecord.number = i + 1;
+                });
+            }
 
             return res.send({
                 success: true,
