@@ -34,6 +34,8 @@ import { dbPromise } from './db.js';
                 });
             }
 
+            query.channel = query.channel.toLowerCase();
+
             const clipsCollection = db.collection('clips');
 
             const hasClips = !!(await clipsCollection.find({ channel: query.channel }).limit(1).count(1));
@@ -62,6 +64,8 @@ import { dbPromise } from './db.js';
                     error: 'Missing required parameter: "channel"',
                 });
             }
+
+            query.channel = query.channel.toLowerCase();
 
             const clipsCollection = db.collection('clips');
 

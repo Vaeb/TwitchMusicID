@@ -269,10 +269,10 @@ const makeUi = () => {
     `;
 };
 
+const clearOutput = () => unsafeWindow.$('#output').empty();
+
 const output = (out) => {
     const $output = unsafeWindow.$('#output');
-    $output.empty();
-    console.log($output);
     if (typeof out === 'string') {
         $output.text(out);
     } else {
@@ -288,6 +288,8 @@ const shortenString = (str, len = 50) => {
     return '<N/A>';
 };
 
+const makeLink = link => unsafeWindow.$('<a>').attr('href', link).text(link);
+
 const outputClips = (clips) => {
     const out = [];
 
@@ -297,7 +299,7 @@ const outputClips = (clips) => {
         const $clipDiv = unsafeWindow.$('<div>');
 
         $clipDiv.append(
-            unsafeWindow.$('<a>').attr('href', link).text(link),
+            makeLink(link),
             ' - ',
             `${clip.views} views`
         );
@@ -335,6 +337,7 @@ const makeUiLogic = () => {
             dataType: 'json',
         });
 
+        clearOutput();
         outputClips(clips);
     });
 
@@ -344,10 +347,40 @@ const makeUiLogic = () => {
         const { clips } = await unsafeWindow.$.ajax({
             type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
+            url: `${apiUrl}/music-clips?channel=buddha&unchecked_only=1&limit=100`,
+            dataType: 'json',
+        });
+
+        clearOutput();
+        output([
+            unsafeWindow.$('<div>').append(
+                'There are too many clips to list. If you would like to view the full list manually, go to: ',
+                makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&pretty=1`)
+            ),
+            unsafeWindow.$('<br/>'),
+            unsafeWindow.$('<br/>'),
+        ]);
+        outputClips(clips);
+    });
+
+    unsafeWindow.$('#list_music_unchecked').click(async () => {
+        output('Fetching data, this may take a few seconds...');
+
+        const { clips } = await unsafeWindow.$.ajax({
+            type: 'GET',
+            // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
             url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=100`,
             dataType: 'json',
         });
 
+        clearOutput();
+        output([
+            unsafeWindow.$('<div>').text(
+                `There are too many clips to list. If you would like to view the full list manually, go to: ${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&pretty=1`
+            ),
+            unsafeWindow.$('<br/>'),
+            unsafeWindow.$('<br/>'),
+        ]);
         outputClips(clips);
     });
 };
