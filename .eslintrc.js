@@ -1,5 +1,14 @@
 module.exports = {
     extends: 'airbnb-base',
+    env: {
+        browser: true,
+        node: true,
+        jasmine: true,
+    },
+    globals: {
+        unsafeWindow: true,
+        GM_addStyle: true,
+    },
     rules: {
         'arrow-parens': ['error', 'as-needed', { requireForBlockBody: true }],
         // "class-methods-use-this": "off",

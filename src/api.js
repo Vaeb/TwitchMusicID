@@ -1,7 +1,7 @@
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
-import express, { query } from 'express';
+import express from 'express';
 import pretty from 'express-prettify';
 import bodyParser from 'body-parser';
 
@@ -19,12 +19,12 @@ import { dbPromise } from './db.js';
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(pretty({ query: 'pretty' }));
 
-    app.get('/api/music-clips', async (req, res) => {
+    app.get('/api/has-clips', async (req, res) => {
         try {
-            console.log('API request received:', req.query);
-            let { channel, minimal, unchecked, pretty } = req.query;
+            const { query } = req;
+            console.log('API request received:', query);
 
-            if (!channel) {
+            if (!query.channel) {
                 return res.status(400).send({
                     success: false,
                     error: 'Missing required parameter: "channel"',
@@ -33,30 +33,61 @@ import { dbPromise } from './db.js';
 
             const clipsCollection = db.collection('clips');
 
-            const hasClips = !!(await clipsCollection.find({ channel }).limit(1).count(1));
+            const hasClips = !!(await clipsCollection.find({ channel: query.channel }).limit(1).count(1));
+
+            return res.send({
+                success: true,
+                hasClips,
+            });
+        } catch (err) {
+            return res.status(400).send({
+                success: false,
+                error: err,
+            });
+        }
+    });
+
+    app.get('/api/music-clips', async (req, res) => {
+        try {
+            const { query } = req;
+            console.log('API request received:', query);
+
+            if (!query.channel) {
+                return res.status(400).send({
+                    success: false,
+                    error: 'Missing required parameter: "channel"',
+                });
+            }
+
+            const clipsCollection = db.collection('clips');
+
+            const hasClips = !!(await clipsCollection.find({ channel: query.channel }).limit(1).count(1));
 
             if (!hasClips) {
                 return res.status(400).send({
                     success: false,
-                    error: `There are no clips in the database for channel "${channel}"`,
+                    error: `There are no clips in the database for channel "${query.channel}"`,
                 });
             }
 
             let queryObj = {};
             let projectionObj = {};
 
-            minimal = parseInt(minimal, 10);
-            unchecked = parseInt(unchecked, 10);
-            pretty = parseInt(pretty, 10);
+            query.minimal = parseInt(query.minimal, 10);
+            query.unchecked = parseInt(query.unchecked, 10);
+            query.unchecked_only = parseInt(query.unchecked_only, 10);
+            query.pretty = parseInt(query.pretty, 10);
 
-            if (minimal) {
+            if (query.minimal) {
                 projectionObj = { slug: 1, _id: 0 };
             }
 
-            if (unchecked) {
-                queryObj = { channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }, { identified: false }] };
+            if (query.unchecked) {
+                queryObj = { channel: query.channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }, { identified: false }] };
+            } else if (query.unchecked_only) {
+                queryObj = { channel: query.channel, identified: false };
             } else {
-                queryObj = { channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }] };
+                queryObj = { channel: query.channel, $or: [{ song: { $exists: true } }, { fingerprintFailed: true }] };
             }
 
             const musicClips = await clipsCollection
@@ -65,15 +96,16 @@ import { dbPromise } from './db.js';
                 .sort({ views: -1 })
                 .toArray();
 
-            if (!minimal) {
+            if (!query.minimal) {
                 musicClips.forEach((clipRecord, i) => {
                     clipRecord.url = `https://clips.twitch.tv/${clipRecord.slug}`;
-                    if (!pretty) clipRecord.number = i + 1;
+                    if (!query.pretty) clipRecord.number = i + 1;
                 });
             }
 
             return res.send({
                 success: true,
+                count: musicClips.length,
                 clips: musicClips,
             });
         } catch (err) {
