@@ -17,12 +17,11 @@
 
 'use strict';
 
+const apiUrl = 'https://vaeb.io:3000/api';
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let clientData;
 
-const setOutput = (text) => {
-    console.log(text);
-};
 
 const loadScripts = () => {
     console.log('Loading scripts...');
@@ -244,21 +243,43 @@ const makeUi = () => {
         <div id="main">
             <div id="loginName">Logged in as: ${clientData.displayName}</div>
             <div class="horizEls">
-                <button>List music clips</button>
-                <button>List unchecked clips</button>
-                <button>List music + unchecked clips</button>
+                <button id="list_music">List music clips</button>
+                <button id="list_unchecked">List unchecked clips</button>
+                <button id="list_music_unchecked">List music + unchecked clips</button>
             </div>
             <div class="horizEls">
-                <button>Delete music clips</button>
-                <button>Delete unchecked clips</button>
-                <button>Delete music + unchecked clips</button>
+                <button id="delete_music">Delete music clips</button>
+                <button id="delete_unchecked">Delete unchecked clips</button>
+                <button id="delete_music_unchecked">Delete music + unchecked clips</button>
             </div>
         </div>
 
         <div id="output">
-
         </div>
     `;
+};
+
+const output = (out) => {
+    const $output = unsafeWindow.$('#output');
+    $output.empty();
+    if (typeof out === 'string') {
+        $output.text(out);
+    } else {
+        $output.appendChild(out);
+    }
+};
+
+const makeUiLogic = () => {
+    unsafeWindow.$('#list_music').click(async () => {
+        const clips = await unsafeWindow.$.ajax({
+            // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
+            url: `${apiUrl}/music-clips?channel=buddha`,
+            type: 'GET',
+            dataType: 'json',
+        });
+
+        output(JSON.stringify(clips, null, 2));
+    });
 };
 
 const areScriptsLoaded = () => new Promise((resolve) => {
@@ -302,6 +323,7 @@ const init = async () => {
 
     loadClientData();
     makeUi();
+    makeUiLogic();
 };
 
 init();

@@ -2,6 +2,7 @@ import fs from 'fs';
 import http from 'http';
 import https from 'https';
 import express from 'express';
+import cors from 'cors';
 import pretty from 'express-prettify';
 import bodyParser from 'body-parser';
 
@@ -15,6 +16,7 @@ import { dbPromise } from './db.js';
 
     const app = express();
 
+    app.use(cors('*'));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(pretty({ query: 'pretty' }));
