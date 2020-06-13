@@ -2,6 +2,7 @@ import fs from 'fs';
 import http from 'http';
 import https from 'https';
 import express, { query } from 'express';
+import pretty from 'express-prettify';
 import bodyParser from 'body-parser';
 
 import { dbPromise } from './db.js';
@@ -16,6 +17,7 @@ import { dbPromise } from './db.js';
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(pretty({ query: 'pretty' }));
 
     app.get('/api/music-clips', async (req, res) => {
         try {
@@ -55,6 +57,7 @@ import { dbPromise } from './db.js';
             musicClips.forEach((clipRecord) => {
                 clipRecord.url = `https://clips.twitch.tv/${clipRecord.slug}`;
             });
+
 
             return res.send({
                 success: true,
