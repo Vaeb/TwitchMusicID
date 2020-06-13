@@ -52,6 +52,10 @@ import { dbPromise } from './db.js';
                 .sort({ views: -1 })
                 .toArray();
 
+            musicClips.forEach((clipRecord) => {
+                clipRecord.url = `https://clips.twitch.tv/${clipRecord.slug}`;
+            });
+
             return res.send({
                 success: true,
                 clips: musicClips,
