@@ -138,8 +138,17 @@ export default {
 
         while ((clipsChecked + batchSize) <= searchLimit) {
             batchNum++;
-            const numResults = await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
-            await delay(numResults > 0 ? 1000 * 3 : 500);
+            for (let i = 0; i < 6; i++) {
+                try {
+                    const numResults = await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
+                    await delay(numResults > 0 ? 1000 * 3 : 500);
+                    break;
+                } catch (err) {
+                    console.log('\n', i, 'Caught scan error:', err);
+                    await delay(1000 * 3);
+                    send('Scan failed, retrying');
+                }
+            }
             clipsChecked += batchSize;
         }
 
