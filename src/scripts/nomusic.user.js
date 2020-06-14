@@ -18,10 +18,13 @@
 'use strict';
 
 const apiUrl = 'https://vaeb.io:3000/api';
+const globalClientId = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
+let $$;
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let clientData;
-
+let deleteHeaders;
+let clipsRemoved = 0;
 
 const loadScripts = () => {
     console.log('Loading scripts...');
@@ -197,10 +200,6 @@ const makeUi = () => {
         }
 
         body {
-            
-        }
-
-        body {
             height: 100vh;
         }
 
@@ -227,8 +226,15 @@ const makeUi = () => {
             align-content: stretch;
         }
 
+        div.horizEls {
+            margin: 15px 0 0 0;
+        }
+
         button {
-            margin: 15px 5px 0 5px;
+            margin: 0 5px 0 5px;
+        }
+
+        button, input {
             z-index: 99999;
         }
 
@@ -247,6 +253,10 @@ const makeUi = () => {
             overflow-y: auto;
             font-size: 16px;
         }
+
+        input#delete_test_input {
+
+        }
     `);
 
     document.body.innerHTML += `
@@ -262,6 +272,10 @@ const makeUi = () => {
                 <button id="delete_unchecked">Delete unchecked clips</button>
                 <button id="delete_music_unchecked">Delete music + unchecked clips</button>
             </div>
+            <div class="horizEls">
+                <input id="delete_test_input" type="text"></input>
+                <button id="delete_test">Manual delete</button>
+            </div>
         </div>
 
         <div id="output">
@@ -269,12 +283,12 @@ const makeUi = () => {
     `;
 };
 
-const clearOutput = () => unsafeWindow.$('#output').empty();
+const clearOutput = () => $$('#output').empty();
 
 const output = (out) => {
-    const $output = unsafeWindow.$('#output');
+    const $output = $$('#output');
     if (typeof out === 'string') {
-        $output.text(out);
+        output($$('<div>').text(out));
     } else {
         $output.append(...out);
     }
@@ -288,7 +302,7 @@ const shortenString = (str, len = 50) => {
     return '<N/A>';
 };
 
-const makeLink = link => unsafeWindow.$('<a>').attr('href', link).text(link);
+const makeLink = link => $$('<a>').attr('href', link).text(link);
 
 const outputClips = (clips) => {
     const out = [];
@@ -296,13 +310,9 @@ const outputClips = (clips) => {
     clips.forEach((clip) => {
         const link = `https://clips.twitch.tv/${clip.slug}`;
 
-        const $clipDiv = unsafeWindow.$('<div>');
+        const $clipDiv = $$('<div>');
 
-        $clipDiv.append(
-            makeLink(link),
-            ' - ',
-            `${clip.views} views`
-        );
+        $clipDiv.append(makeLink(link), ' - ', `${clip.views} views`);
 
         if (clip.song) {
             $clipDiv.append(
@@ -315,10 +325,7 @@ const outputClips = (clips) => {
             );
         }
 
-        $clipDiv.append(
-            unsafeWindow.$('<br>'),
-            unsafeWindow.$('<br>')
-        );
+        $clipDiv.append($$('<br>'), $$('<br>'));
 
         out.push($clipDiv);
     });
@@ -326,11 +333,51 @@ const outputClips = (clips) => {
     output(out);
 };
 
+const deleteClip = async (slug, views) => {
+    console.log('Deleting clip:', slug);
+
+    const gqlObject = [];
+    gqlObject[0] = {
+        operationName: 'Clips_DeleteClips',
+        variables: { input: { slugs: [slug] } },
+        extensions: { persistedQuery: { version: 1, sha256Hash: 'df142a7eec57c5260d274b92abddb0bd1229dc538341434c90367cf1f22d71c4' } },
+    };
+
+    try {
+        const result = await $$.ajax({
+            url: 'https://gql.twitch.tv/gql',
+            type: 'POST',
+            headers: deleteHeaders,
+            timeout: 45000,
+            data: JSON.stringify(gqlObject),
+            contentType: 'application/json',
+        });
+
+        console.log('result', result);
+
+        if (result[0].errors && result[0].errors[0].message) {
+            output(`Internal deletion error for clip ${slug}: ${result[0].errors[0].message}`);
+            return;
+        }
+
+        if (result[0].data && result[0].data.deleteClips && result[0].data.deleteClips.__typename !== 'undefined' && result[0].data.deleteClips.__typename == 'DeleteClipsPayload') {
+            clipsRemoved++;
+            output(`(${clipsRemoved}) Successfully deleted clip: ${slug}`);
+            return;
+        }
+
+        output(`Deletion failed for clip ${slug}. Reason unknown.`);
+    } catch (err) {
+        output(`Script deletion error for clip ${slug}: ${JSON.stringify(err)}`);
+    }
+};
+
 const makeUiLogic = () => {
-    unsafeWindow.$('#list_music').click(async () => {
+    $$('#list_music').click(async () => {
+        clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { clips } = await unsafeWindow.$.ajax({
+        const { clips } = await $$.ajax({
             type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
             url: `${apiUrl}/music-clips?channel=buddha`,
@@ -341,47 +388,69 @@ const makeUiLogic = () => {
         outputClips(clips);
     });
 
-    unsafeWindow.$('#list_unchecked').click(async () => {
+    $$('#list_unchecked').click(async () => {
+        clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { clips } = await unsafeWindow.$.ajax({
+        const { clips } = await $$.ajax({
             type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha&unchecked_only=1&limit=100`,
+            url: `${apiUrl}/music-clips?channel=buddha&unchecked_only=1&limit=600`,
             dataType: 'json',
         });
 
         clearOutput();
         output([
-            unsafeWindow.$('<div>').append(
-                'There are too many clips to list. If you would like to view the full list manually, go to: ',
-                makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&pretty=1`)
-            ),
-            unsafeWindow.$('<br/>'),
-            unsafeWindow.$('<br/>'),
+            unsafeWindow
+                .$('<div>')
+                .append(
+                    'There are too many clips to list. If you would like to view the full list manually, go to: ',
+                    makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&pretty=1`)
+                ),
+            $$('<br/>'),
+            $$('<br/>'),
         ]);
         outputClips(clips);
     });
 
-    unsafeWindow.$('#list_music_unchecked').click(async () => {
+    $$('#list_music_unchecked').click(async () => {
+        clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { clips } = await unsafeWindow.$.ajax({
+        const { clips } = await $$.ajax({
             type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=100`,
+            url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=600`,
             dataType: 'json',
         });
 
         clearOutput();
         output([
-            unsafeWindow.$('<div>').text(
-                `There are too many clips to list. If you would like to view the full list manually, go to: ${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&pretty=1`
-            ),
-            unsafeWindow.$('<br/>'),
-            unsafeWindow.$('<br/>'),
+            unsafeWindow
+                .$('<div>')
+                .append(
+                    'There are too many clips to list. If you would like to view the full list manually, go to: ',
+                    makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&pretty=1`)
+                ),
+            $$('<br/>'),
+            $$('<br/>'),
         ]);
         outputClips(clips);
+    });
+
+    $$('#delete_test').click(async () => {
+        clearOutput();
+
+        const slugData = unsafeWindow
+            .$('#delete_test_input')
+            .val()
+            .match(/.+\/([\w\d]+).*?$|^([\w\d]+)$/);
+
+        if (!slugData) return;
+
+        const slug = slugData[1] || slugData[2];
+
+        deleteClip(slug);
     });
 };
 
@@ -389,6 +458,7 @@ const areScriptsLoaded = () => new Promise((resolve) => {
     const interval = setInterval(() => {
         if (unsafeWindow.jQuery && unsafeWindow.Cookies) {
             console.log('Scripts found!');
+            $$ = unsafeWindow.$;
             resolve(true);
             clearInterval(interval);
         } else {
@@ -406,6 +476,12 @@ const loadClientData = () => {
     }
 
     clientData = JSON.parse(decodeURIComponent(clientDataRaw));
+    clientData.oAuth = `OAuth ${clientData.authToken}`;
+
+    deleteHeaders = {
+        Authorization: clientData.oAuth,
+        'Client-Id': globalClientId,
+    };
 };
 
 const init = async () => {

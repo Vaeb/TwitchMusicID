@@ -86,6 +86,7 @@ import { dbPromise } from './db.js';
             query.unchecked = parseInt(query.unchecked, 10);
             query.unchecked_only = parseInt(query.unchecked_only, 10);
             query.pretty = parseInt(query.pretty, 10);
+            query.page = parseInt(query.page, 10);
             query.limit = parseInt(query.limit, 10);
 
             if (query.minimal) {
@@ -105,7 +106,14 @@ import { dbPromise } from './db.js';
                 .project(projectionObj)
                 .sort({ views: -1 });
 
-            if (query.limit) musicClipsCursor = musicClipsCursor.limit(query.limit);
+            const clipBatchSize = 600;
+            if (query.page) {
+                musicClipsCursor = musicClipsCursor.skip((query.page - 1) * clipBatchSize).limit(clipBatchSize);
+            }
+
+            if (query.limit) {
+                musicClipsCursor = musicClipsCursor.limit(query.limit);
+            }
 
             const musicClips = await musicClipsCursor.toArray();
 
