@@ -136,6 +136,7 @@ export const fetchMp4Data = async (clip, clientId2) => {
 
     if (clipData == null) {
         console.log('>>> No mp4 data for', clip.id);
+        getDb().collection('clips').remove({ slug: clip.id }, true); // If there's no mp4 data it's probably deleted
         return false;
     }
 
