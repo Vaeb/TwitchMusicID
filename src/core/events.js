@@ -31,14 +31,14 @@ import { sendMessage } from '../util.js';
 
     console.log('Ran events module');
 
-    // if (process.platform !== 'win32') {
-    //     await connectedPromise;
+    if (process.platform !== 'win32') {
+        await connectedPromise;
 
-    //     const send = (...args) => sendMessage(chatClient, 'vaeben', ...args);
+        const send = (...args) => sendMessage(chatClient, 'vaeben', ...args);
 
-    //     const identifyCommand = commands.find(command => command.name == 'identify');
-    //     identifyCommand.func({
-    //         send,
-    //     });
-    // }
+        const identifyCommand = commands.find(command => command.name == 'identify');
+        identifyCommand.func({
+            send,
+        });
+    }
 })();
