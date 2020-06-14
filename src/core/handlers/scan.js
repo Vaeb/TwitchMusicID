@@ -99,6 +99,7 @@ export default {
 
     func: async ({ send, args }) => {
         const channelTargetName = args[0];
+        const numDaysStart = parseInt(args[1], 10);
         send('Scanning', `${channelTargetName}...`);
         const channelTargetId = await fetchChannelId(channelTargetName);
 
@@ -123,7 +124,7 @@ export default {
         if (oldestStartDate === undefined) return;
 
         // let timeframeSizeOriginal = 1000 * 60 * 80;
-        let timeframeSizeOriginal = 1000 * 60 * 60 * 24 * 8;
+        let timeframeSizeOriginal = 1000 * 60 * 60 * 24 * numDaysStart;
         let timeframeBetweenOriginal = timeframeSizeOriginal;
         const timeframes = [[timeframeSizeOriginal, timeframeBetweenOriginal]];
 
