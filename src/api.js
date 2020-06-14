@@ -157,8 +157,8 @@ import { getClipsByIds, chunkBy, delay } from './util.js';
             });
 
             if (deleteSlugs.length > 0) {
-                console.log('Removing', deleteSlugs.length, 'deleted clips from the db');
-                clipsCollection.remove({ slug: { $in: deleteSlugs } });
+                console.log('Removing', deleteSlugs.length, 'deleted clips from the db:', deleteSlugs[0]);
+                clipsCollection.deleteMany({ slug: { $in: deleteSlugs } });
             }
         } catch (err) {
             console.log('/music-clips error 3:', err);
