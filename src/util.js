@@ -42,12 +42,12 @@ export const chunkBy = (arr, size) => arr.reduce((all, one, i) => {
     return all;
 }, []);
 
-export const makeDocumentFromClip = (clip, identified = false) => {
+export const makeDocumentFromClip = (clip, identified = false, channelName = 'buddha') => {
     const clipDocument = {
         slug: clip.id,
         creationStamp: clip.creationStamp || +new Date(clip.creationDate),
         views: clip.views,
-        channel: 'buddha',
+        channel: channelName.toLowerCase(),
         identified,
     };
 
@@ -69,6 +69,11 @@ export const makeDocumentFromClip = (clip, identified = false) => {
 export const getClipsByIds = (clipIds) => { // Promise
     const twitchClient = fetchTwitchClient();
     return twitchClient.helix.clips.getClipsByIds(clipIds);
+};
+
+export const fetchChannelId = async (channelName) => {
+    const twitchClient = fetchTwitchClient();
+    return (await twitchClient.kraken.users.getUserByName(channelName)).id;
 };
 
 export const fetchClips = (userId, filter) => { // Promise

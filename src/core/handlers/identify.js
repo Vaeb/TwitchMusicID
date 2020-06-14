@@ -1,77 +1,15 @@
 /* eslint-disable no-await-in-loop */
-// import util from 'util';
-import fs from 'fs';
-import { format } from 'util';
-import axios from 'axios';
+// import { format } from 'util';
 
 import { fetchAuth } from '../../setup.js';
 import {
-    delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip,
+    delay, makeDocumentFromClip, fetchChannelId,
 } from '../../util.js';
-import { clipsStored, identifyClip } from '../identification.js';
+import { identifyClip } from '../identification.js';
 import { dbPromise } from '../../db.js';
 
-const pages = 1; // <= 100 clips
-const skipPages = 0;
-const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
-const chunkSize = 3;
-const delayTime = 1000 * 3;
-const batches = 1;
 
-// const identifyClipsArray = async (clientId2, clipsCollection, send, startStamp, endStamp) => {
-//     startStamp = undefined; endStamp = undefined;
-//     send('\n\nScanning between', new Date(startStamp), 'and', new Date(endStamp), '...');
-
-//     const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
-
-//     let clips;
-//     let page = 0;
-//     while ((clips = await clipPages.getNext()).length) {
-//         page++;
-//         console.log('\n\nChecking page', page);
-
-//         const clipRecords = await clipsStored(clips, clipsCollection);
-//         const storedSlugs = Object.assign({}, ...clipRecords.map(clipRecord => ({ [clipRecord.slug]: true })));
-
-//         const newDocuments = [];
-
-//         const clipChunks = chunkBy(clips, chunkSize);
-
-//         for (let i = 0; i < clipChunks.length; i++) {
-//             const clipsSubset = clipChunks[i];
-//             let didScan = false;
-
-//             await Promise.all(clipsSubset.map(async (clip) => {
-//                 if (storedSlugs[clip.id]) return;
-
-//                 const songData = await identifyClip(clip, clientId2); // songData on success+music, true on success+no_music, false on failure
-
-//                 if (songData) {
-//                     newDocuments.push(makeDocumentFromClip(clip));
-//                     didScan = didScan || typeof songData === 'object';
-//                 }
-//                 // send(format(clip));
-//             }));
-
-//             if (didScan) {
-//                 await delay(delayTime);
-//             }
-//         }
-
-//         console.log('newDocuments', newDocuments);
-//         console.log('Added', newDocuments.length, 'new clips to db');
-
-//         if (newDocuments.length > 0) {
-//             clipsCollection.insertMany(newDocuments, { ordered: false });
-//         }
-
-//         send('Checked page', page);
-
-//         // if (page >= 2) return;
-//     }
-// };
-
-const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, batchNum) => {
+const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, batchNum, channelName) => {
     let numAppeared = 0;
     const recordsActive = {};
     const bulkWrites = [];
@@ -80,7 +18,7 @@ const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, bat
     console.log('');
 
     await new Promise((resolve) => { // When promise resolves, all batchSize records should be updated to `identified: true`
-        clipsCollection.find({ identified: false }).sort({ views: -1 }).limit(batchSize).forEach(async (clipRecord) => {
+        clipsCollection.find({ channel: channelName, identified: false }).sort({ views: -1 }).limit(batchSize).forEach(async (clipRecord) => {
             recordsActive[clipRecord.slug] = true;
             numAppeared++;
             clipRecord.id = clipRecord.slug;
@@ -95,7 +33,7 @@ const identifyTopClips = async (send, clientId2, clipsCollection, batchSize, bat
                 bulkWrites.push({
                     replaceOne: {
                         filter: { slug: clipRecord.slug },
-                        replacement: makeDocumentFromClip(clipRecord, true),
+                        replacement: makeDocumentFromClip(clipRecord, true, channelName),
                     },
                 });
             }
@@ -123,10 +61,12 @@ export default {
     desc: 'Identify music in the top stored clips',
     params: [],
 
-    func: async ({ send }) => {
+    func: async ({ send, args }) => {
         if (process.platform === 'win32') return;
 
-        send('\nIdentifying top clips...');
+        const channelTargetName = args[0];
+        send(`\nIdentifying top clips for ${channelTargetName}...`);
+        // const channelTargetId = await fetchChannelId(channelTargetName);
 
         const { clientId2 } = await fetchAuth();
 
@@ -142,7 +82,7 @@ export default {
             batchNum++;
             for (let i = 0; i < 6; i++) {
                 try {
-                    const numResults = await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum);
+                    const numResults = await identifyTopClips(send, clientId2, clipsCollection, batchSize, batchNum, channelTargetName);
                     await delay(numResults > 0 ? 1000 * 3 : 500);
                     break;
                 } catch (err) {

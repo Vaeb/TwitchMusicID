@@ -533,7 +533,7 @@ const makeUiLogic = () => {
         let pageNum = 0;
         startRequestWorker(async () => {
             pageNum++;
-            const numClips = await queueClipDeletions(`${apiUrl}/music-clips?channel=buddha&minimal=1`, pageNum);
+            const numClips = await queueClipDeletions(`${apiUrl}/music-clips?channel=${clientData.displayName}&minimal=1`, pageNum);
             if (numClips === 0) stopRequestWorker();
         });
 

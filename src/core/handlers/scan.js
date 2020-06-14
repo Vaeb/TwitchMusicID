@@ -1,27 +1,22 @@
 /* eslint-disable no-await-in-loop */
 // import util from 'util';
-import fs from 'fs';
-import { format } from 'util';
-import axios from 'axios';
+// import { format } from 'util';
 
 import { fetchAuth } from '../../setup.js';
-import { delay, chunkBy, downloadFile, fetchClipsPages, makeDocumentFromClip, dString, dBritain } from '../../util.js';
-import { clipsStored, identifyClip } from '../identification.js';
+import {
+    delay, fetchClipsPages, makeDocumentFromClip, dString, fetchChannelId,
+} from '../../util.js';
+import { clipsStored } from '../identification.js';
 import { dbPromise } from '../../db.js';
 
-const pages = 1; // <= 100 clips
-const skipPages = 0;
-const skipClips = 0; // If both skipPages and skipClips are above 0, the one which skips the most clips is used
-const chunkSize = 3;
 const delayTime1 = 1000 * 0.1; // 1000 * 3
 const delayTime2 = 1000 * 0.6; // 1000 * 3
-const batches = 1;
 
-const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCheckingDb) => {
+const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCheckingDb, channelName, channelId) => {
     // startStamp = new Date('1970-01-02'); endStamp = new Date('2037-12-30');
     send('\n\nScanning between', dString(new Date(startStamp)), 'and', dString(new Date(endStamp)), '...');
 
-    const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp });
+    const clipPages = fetchClipsPages(channelId, { startDate: startStamp, endDate: endStamp });
 
     const newDocuments = [];
     const seenClips = {};
@@ -46,7 +41,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
             const clip = clips[i];
             if (!seenClips[clip.id]) {
                 seenClips[clip.id] = true;
-                newDocuments.push(makeDocumentFromClip(clip, false));
+                newDocuments.push(makeDocumentFromClip(clip, false, channelName));
                 addedSome = true;
             }
         }
@@ -75,7 +70,7 @@ const scan = async (clientId2, clipsCollection, send, startStamp, endStamp, isCh
     return newDocuments.length;
 };
 
-const findOldestClipDate = async () => {
+const findOldestClipDate = async (channelId) => {
     const startStamp = 1463702400000;
     let endStamp = +new Date();
 
@@ -84,7 +79,7 @@ const findOldestClipDate = async () => {
     let stampOffset = 1;
 
     do {
-        const clipPages = fetchClipsPages(136765278, { startDate: startStamp, endDate: endStamp + stampOffset });
+        const clipPages = fetchClipsPages(channelId, { startDate: startStamp, endDate: endStamp + stampOffset });
         clips = await clipPages.getNext();
 
         if (clips.length) {
@@ -102,8 +97,10 @@ export default {
     desc: 'Scan channel for clips; save to db',
     params: [],
 
-    func: async ({ twitchClient, send, channel }) => {
-        send('Scanning...');
+    func: async ({ send, args }) => {
+        const channelTargetName = args[0];
+        send('Scanning', `${channelTargetName}...`);
+        const channelTargetId = await fetchChannelId(channelTargetName);
 
         const { clientId2 } = await fetchAuth();
 
@@ -114,7 +111,7 @@ export default {
         for (let i = 0; i < 5; i++) {
             try {
                 console.log('Fetching oldest clip date');
-                oldestStartDate = +(await findOldestClipDate()) - (1000 * 60 * 60 * 24);
+                oldestStartDate = +(await findOldestClipDate(channelTargetId)) - 1000 * 60 * 60 * 24;
                 console.log('Found oldest clip date:', oldestStartDate, dString(new Date(oldestStartDate)));
                 break;
             } catch (err) {
@@ -160,7 +157,7 @@ export default {
 
                 for (let i = 0; i < 6; i++) {
                     try {
-                        const numAdded = await scan(clientId2, clipsCollection, send, startStampNow, endStampNow, isCheckingDb); // Get up to 10 pages of clips
+                        const numAdded = await scan(clientId2, clipsCollection, send, startStampNow, endStampNow, isCheckingDb, channelTargetName, channelTargetId); // Get up to 10 pages of clips
                         if (isCheckingDb && numAdded > 0) {
                             isCheckingDb = false;
                         }

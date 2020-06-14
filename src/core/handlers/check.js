@@ -4,7 +4,9 @@ import fs from 'fs';
 import axios from 'axios';
 
 import { fetchAuth } from '../../setup.js';
-import { sendMessage, delay, chunkBy, downloadFile } from '../../util.js';
+import {
+    sendMessage, delay, chunkBy, downloadFile, fetchChannelId,
+} from '../../util.js';
 import { fingerprint, identify } from '../identification.js';
 
 // const useSearchPeriod = false;
@@ -16,7 +18,7 @@ const chunkSize = 3;
 const delayTime = 1000 * 3;
 const batches = 1;
 
-const checkClips = async (twitchClient, chatClient, channel, startDate, endDate) => {
+const checkClips = async (twitchClient, chatClient, channel, startDate, endDate, channelId) => {
     const { clientId2 } = await fetchAuth();
 
     let scanningBlockedAll = false;
@@ -28,7 +30,7 @@ const checkClips = async (twitchClient, chatClient, channel, startDate, endDate)
 
     console.log('Fetching clips!');
 
-    const clipsRequest = twitchClient.helix.clips.getClipsForBroadcasterPaginated(136765278, { startDate, endDate });
+    const clipsRequest = twitchClient.helix.clips.getClipsForBroadcasterPaginated(channelId, { startDate, endDate });
 
     let i = 0;
     let minDateStamp = Infinity;
@@ -196,7 +198,13 @@ export default {
     desc: 'Test command; Check clips',
     params: [],
 
-    func: async ({ twitchClient, chatClient, channel }) => {
+    func: async ({
+        twitchClient, chatClient, channel, send, args,
+    }) => {
+        const channelTargetName = args[0];
+        send('Scanning', `${channelTargetName}...`);
+        const channelTargetId = await fetchChannelId(channelTargetName);
+
         console.log('\n\nChecking...');
         sendMessage(chatClient, channel, 'Checking...');
 
@@ -215,7 +223,7 @@ export default {
 
             sendMessage(chatClient, channel, `Starting batch ${i + 1}/${batches}`);
 
-            const { minDateStamp, maxDateStamp, clipStamps } = await checkClips(twitchClient, chatClient, channel, partition.startDate, partition.endDate);
+            const { minDateStamp, maxDateStamp, clipStamps } = await checkClips(twitchClient, chatClient, channel, partition.startDate, partition.endDate, channelTargetId);
 
             sendMessage(chatClient, channel, `Batch ${i + 1} complete`);
 
