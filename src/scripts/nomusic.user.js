@@ -66,12 +66,7 @@ const loadScripts = () => {
     particleScript.type = 'text/javascript';
     particleScript.src = 'https://vaeb.io/assets/scripts/particles.js';
 
-    // const particleScriptApp = document.createElement('script');
-    // particleScriptApp.type = 'text/javascript';
-    // particleScriptApp.src = 'https://vaeb.io/assets/scripts/particlesLoad.js';
-
     document.body.appendChild(particleScript);
-    // document.body.appendChild(particleScriptApp);
 
     const particleInterval = unsafeWindow.setInterval(async () => {
         if (!unsafeWindow.particlesJS) return;
@@ -524,7 +519,7 @@ const makeUiLogic = () => {
         });
 
         clipQueue = [];
-        output('Finished deleting clips!');
+        output('Finished deleting music clips!');
     });
 
     $$('#delete_test').click(async () => {

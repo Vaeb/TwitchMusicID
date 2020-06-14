@@ -8,7 +8,9 @@ const utilMod = require('../../util.js');
 const { format } = util;
 const { execFile } = childProcess;
 const { dbPromise } = dbMod;
-const { sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById, dString } = utilMod;
+const {
+    sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById, dString, getClipsByIds,
+} = utilMod;
 
 const execFileAsync = util.promisify(execFile);
 
@@ -23,6 +25,7 @@ export default {
         const tc = twitchClient;
         const cc = chatClient;
         const db = await dbPromise;
+        const dbClips = db.collection('clips');
         const argsFull = args.join(' ');
         const send = sendMessage.bind(this, chatClient, channel);
 

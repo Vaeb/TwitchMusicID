@@ -66,6 +66,11 @@ export const makeDocumentFromClip = (clip, identified = false) => {
     return clipDocument;
 };
 
+export const getClipsByIds = (clipIds) => { // Promise
+    const twitchClient = fetchTwitchClient();
+    return twitchClient.helix.clips.getClipsByIds(clipIds);
+};
+
 export const fetchClips = (userId, filter) => { // Promise
     filter = { ...filter };
     if (filter.startDate !== undefined && typeof filter.startDate !== 'object') filter.startDate = new Date(filter.startDate);

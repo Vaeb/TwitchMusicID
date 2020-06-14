@@ -8,6 +8,7 @@ import pretty from 'express-prettify';
 import bodyParser from 'body-parser';
 
 import { dbPromise } from './db.js';
+import { getClipsByIds, chunkBy } from './util.js';
 
 (async () => {
     const db = await dbPromise;
@@ -115,7 +116,23 @@ import { dbPromise } from './db.js';
                 musicClipsCursor = musicClipsCursor.limit(query.limit);
             }
 
-            const musicClips = await musicClipsCursor.toArray();
+            const clipsBatches = chunkBy(await musicClipsCursor.toArray(), 100);
+            const musicClips = [];
+            const deleteSlugs = [];
+
+            await Promise.all(clipsBatches.map(async (clipsBatch) => {
+                const clipsExistingMap = Object.assign(
+                    {},
+                    ...(await getClipsByIds(clipsBatch.map(clipRecord => clipRecord.slug))).map(clip => ({ [clip.id]: clip }))
+                );
+                clipsBatch.forEach((clipRecord) => {
+                    if (clipsExistingMap[clipRecord.slug]) {
+                        musicClips.push({ ...clipRecord, title: clipsExistingMap[clipRecord.slug].title });
+                    } else {
+                        deleteSlugs.push(clipRecord.slug);
+                    }
+                });
+            }));
 
             if (!query.minimal) {
                 musicClips.forEach((clipRecord, i) => {
@@ -124,11 +141,16 @@ import { dbPromise } from './db.js';
                 });
             }
 
-            return res.send({
+            res.send({
                 success: true,
                 count: musicClips.length,
                 clips: musicClips,
             });
+
+            if (deleteSlugs.length > 0) {
+                console.log('Removing', deleteSlugs.length, 'deleted clips from the db');
+                clipsCollection.remove({ slug: { $in: deleteSlugs } });
+            }
         } catch (err) {
             console.log('/music-clips error 3:', err);
             return res.status(400).send({
