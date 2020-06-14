@@ -4,6 +4,7 @@ const childProcess = require('child_process');
 const setupMod = require('../../setup.js');
 const dbMod = require('../../db.js');
 const utilMod = require('../../util.js');
+const identificationMod = require('../identification.js');
 
 const { format } = util;
 const { execFile } = childProcess;
@@ -11,6 +12,7 @@ const { dbPromise } = dbMod;
 const {
     sendMessage, delay, chunkBy, downloadFile, fetchClips, fetchClipsPages, fetchClipById, dString, getClipsByIds,
 } = utilMod;
+const { identifyClip, lookupClip } = identificationMod;
 
 const execFileAsync = util.promisify(execFile);
 

@@ -6,7 +6,8 @@ import axios from 'axios';
 import request from 'request';
 
 import { getDb } from '../db.js';
-import { downloadFile } from '../util.js';
+import { fetchAuth } from '../setup.js';
+import { downloadFile, getClipsByIds } from '../util.js';
 import { host, accessKey, accessSecret } from '../hidden.js';
 
 const execFileAsync = util.promisify(execFile);
@@ -218,4 +219,10 @@ export const identifyClip = async (clip, clientId2) => {
     clip.song = songData.metadata.music[0];
 
     return songData;
+};
+
+export const lookupClip = async (slug) => {
+    const clip = (await getClipsByIds([slug]))[0];
+    const { clientId2 } = await fetchAuth();
+    return identifyClip(clip, clientId2);
 };
