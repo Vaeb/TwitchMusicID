@@ -26,6 +26,9 @@ let clientData;
 let deleteHeaders;
 let clipsRemoved = 0;
 
+let clipQueue = [];
+let worker;
+
 const loadScripts = () => {
     console.log('Loading scripts...');
 
@@ -276,6 +279,9 @@ const makeUi = () => {
                 <input id="delete_test_input" type="text"></input>
                 <button id="delete_test">Manual delete</button>
             </div>
+            <div class="horizEls">
+                <button id="delete_stop">Stop active operations</button>
+            </div>
         </div>
 
         <div id="output">
@@ -288,6 +294,7 @@ const clearOutput = () => $$('#output').empty();
 const output = (out) => {
     const $output = $$('#output');
     if (typeof out === 'string') {
+        console.log('Output:', out);
         output($$('<div>').text(out));
     } else {
         $output.append(...out);
@@ -333,8 +340,10 @@ const outputClips = (clips) => {
     output(out);
 };
 
-const deleteClip = async (slug, views) => {
-    console.log('Deleting clip:', slug);
+const deleteClip = async (slug, views = undefined) => {
+    output(`Deleting clip: ${slug}${slug.views !== undefined ? ` (${slug.views} views)` : ''}`);
+
+    return;
 
     const gqlObject = [];
     gqlObject[0] = {
@@ -362,13 +371,52 @@ const deleteClip = async (slug, views) => {
 
         if (result[0].data && result[0].data.deleteClips && result[0].data.deleteClips.__typename !== 'undefined' && result[0].data.deleteClips.__typename == 'DeleteClipsPayload') {
             clipsRemoved++;
-            output(`(${clipsRemoved}) Successfully deleted clip: ${slug}`);
+            output(`(${clipsRemoved}) Successfully deleted clip: ${slug}${slug.views !== undefined ? ` (${slug.views} views)` : ''}`);
             return;
         }
 
         output(`Deletion failed for clip ${slug}. Reason unknown.`);
     } catch (err) {
         output(`Script deletion error for clip ${slug}: ${JSON.stringify(err)}`);
+    }
+};
+
+const startRequestWorker = () => {
+    worker = setInterval(() => {
+        if (clipQueue.length === 0 || $$.active >= 20) return;
+
+        const clip = clipQueue.pop(); // Last slug in the array should be the oldest (this method improves performance)
+        deleteClip(clip.slug, clip.views);
+    }, 25);
+};
+
+const stopRequestWorker = () => {
+    if (worker !== undefined) {
+        clearInterval(worker);
+        worker = undefined;
+    }
+};
+
+const deleteClipPage = async (endpoint, finishedResolve, page = 1) => {
+    try {
+        output(`(${page}) Fetching batch of clips...`);
+
+        const { clips, count } = await $$.ajax({
+            type: 'GET',
+            url: `${endpoint}&page=${page}`,
+            dataType: 'json',
+        });
+
+        if (count === 0) {
+            return finishedResolve();
+        }
+
+        output(`(${page}) Fetched batch of clips!`);
+
+        clipQueue = [...clips.reverse(), ...clipQueue]; // <<- Newest | Oldest ->>
+        console.log('clipQueue', clipQueue.length, clipQueue);
+    } catch (err) {
+        output(`Clip fetch error for batch ${page}: ${JSON.stringify(err)}`);
     }
 };
 
@@ -438,6 +486,22 @@ const makeUiLogic = () => {
         outputClips(clips);
     });
 
+    $$('#delete_music').click(async () => {
+        if (worker) return;
+
+        clearOutput();
+        output('Deleting music clips...');
+        startRequestWorker();
+
+        await new Promise((resolve) => {
+            deleteClipPage(`${apiUrl}/music-clips?channel=buddha&minimal=1`, resolve);
+        });
+
+        stopRequestWorker();
+        clipQueue = [];
+        output('Finished deleting clips!');
+    });
+
     $$('#delete_test').click(async () => {
         clearOutput();
 
@@ -451,6 +515,12 @@ const makeUiLogic = () => {
         const slug = slugData[1] || slugData[2];
 
         deleteClip(slug);
+    });
+
+    $$('#delete_stop').click(async () => {
+        stopRequestWorker();
+        clipQueue = [];
+        output('Stopped active operations!');
     });
 };
 

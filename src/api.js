@@ -90,7 +90,7 @@ import { dbPromise } from './db.js';
             query.limit = parseInt(query.limit, 10);
 
             if (query.minimal) {
-                projectionObj = { slug: 1, _id: 0 };
+                projectionObj = { slug: 1, views: 1, _id: 0 };
             }
 
             if (query.unchecked) {

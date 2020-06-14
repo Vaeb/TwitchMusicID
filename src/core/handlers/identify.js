@@ -124,6 +124,8 @@ export default {
     params: [],
 
     func: async ({ send }) => {
+        if (process.platform === 'win32') return;
+
         send('\nIdentifying top clips...');
 
         const { clientId2 } = await fetchAuth();
