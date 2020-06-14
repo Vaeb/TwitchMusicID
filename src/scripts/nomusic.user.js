@@ -2,7 +2,7 @@
 // @name         Vaeb's Music-Clip Remover
 // @namespace    https://vaeb.io/
 // @copyright    Vaeb
-// @version      0.1.1
+// @version      0.1.2
 // @description  Frontend part of the music-clip remover process
 // @author       Vaeb
 // @match        https://www.twitch.tv/mute
@@ -468,7 +468,7 @@ const makeUiLogic = () => {
         clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { success, error, clips } = await $$.ajax({
+        const { success, error, clips, count } = await $$.ajax({
             type: 'GET',
             url: `${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&limit=${listLimit}`,
             dataType: 'json',
@@ -481,23 +481,25 @@ const makeUiLogic = () => {
         clearOutput();
 
         outputClips(clips);
-        output([
-            unsafeWindow
-                .$('<div>')
-                .append(
-                    'There are too many clips to list. If you would like to view the full list manually, go to: ',
-                    makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&pretty=1`)
-                ),
-            $$('<br/>'),
-            $$('<br/>'),
-        ]);
+        if (count >= listLimit) {
+            output([
+                unsafeWindow
+                    .$('<div>')
+                    .append(
+                        'There are too many clips to list. If you would like to view the full list manually, go to: ',
+                        makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&pretty=1`)
+                    ),
+                $$('<br/>'),
+                $$('<br/>'),
+            ]);
+        }
     });
 
     $$('#list_music_unchecked').click(async () => {
         clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { success, error, clips } = await $$.ajax({
+        const { success, error, clips, count } = await $$.ajax({
             type: 'GET',
             url: `${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&limit=${listLimit}`,
             dataType: 'json',
@@ -509,17 +511,19 @@ const makeUiLogic = () => {
         }
         clearOutput();
 
-        outputClips(clips);
-        output([
-            unsafeWindow
-                .$('<div>')
-                .append(
-                    'There are too many clips to list. If you would like to view the full list manually, go to: ',
-                    makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&pretty=1`)
-                ),
-            $$('<br/>'),
-            $$('<br/>'),
-        ]);
+        if (count >= listLimit) {
+            outputClips(clips);
+            output([
+                unsafeWindow
+                    .$('<div>')
+                    .append(
+                        'There are too many clips to list. If you would like to view the full list manually, go to: ',
+                        makeLink(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&pretty=1`)
+                    ),
+                $$('<br/>'),
+                $$('<br/>'),
+            ]);
+        }
     });
 
     $$('#delete_music').click(async () => {
@@ -539,6 +543,44 @@ const makeUiLogic = () => {
 
         clipQueue = [];
         output('Finished deleting music clips!');
+    });
+
+    $$('#delete_unchecked').click(async () => {
+        if (worker) return;
+
+        clipsRemoved = 0;
+
+        clearOutput();
+        output('Deleting unchecked (low-viewed) clips...');
+
+        let pageNum = 0;
+        startRequestWorker(async () => {
+            pageNum++;
+            const numClips = await queueClipDeletions(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&minimal=1`, pageNum);
+            if (numClips === 0) stopRequestWorker();
+        });
+
+        clipQueue = [];
+        output('Finished deleting unchecked (low-viewed) clips!');
+    });
+
+    $$('#delete_music_unchecked').click(async () => {
+        if (worker) return;
+
+        clipsRemoved = 0;
+
+        clearOutput();
+        output('Deleting music + unchecked clips...');
+
+        let pageNum = 0;
+        startRequestWorker(async () => {
+            pageNum++;
+            const numClips = await queueClipDeletions(`${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&minimal=1`, pageNum);
+            if (numClips === 0) stopRequestWorker();
+        });
+
+        clipQueue = [];
+        output('Finished deleting music + unchecked clips!');
     });
 
     $$('#delete_test').click(async () => {
