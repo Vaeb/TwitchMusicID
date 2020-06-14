@@ -19,15 +19,19 @@
 
 const apiUrl = 'https://vaeb.io:3000/api';
 const globalClientId = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
+const maxOutput = 700;
+const listLimit = 600;
+
 let $$;
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let clientData;
 let deleteHeaders;
 let clipsRemoved = 0;
 
 let clipQueue = [];
 let worker;
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const loadScripts = () => {
     console.log('Loading scripts...');
@@ -239,6 +243,7 @@ const makeUi = () => {
 
         button, input {
             z-index: 99999;
+            position: relative;
         }
 
         div#output {
@@ -284,12 +289,17 @@ const makeUi = () => {
             </div>
         </div>
 
-        <div id="output">
-        </div>
+        <div id="output"></div>
+        <button id="clear_output">Clear Output</button>
     `;
 };
 
-const clearOutput = () => $$('#output').empty();
+let numOutputted = 0;
+
+const clearOutput = () => {
+    numOutputted = 0;
+    $$('#output').empty();
+};
 
 const output = (out) => {
     const $output = $$('#output');
@@ -297,7 +307,12 @@ const output = (out) => {
         console.log('Output:', out);
         output($$('<div>').text(out));
     } else {
-        $output.append(...out);
+        $output.prepend(...out);
+        if (numOutputted >= maxOutput) {
+            $output.children().last().remove();
+        } else {
+            numOutputted++;
+        }
     }
 };
 
@@ -341,16 +356,16 @@ const outputClips = (clips) => {
 };
 
 const deleteClip = async (slug, views = undefined) => {
-    output(`Deleting clip: ${slug}${slug.views !== undefined ? ` (${slug.views} views)` : ''}`);
+    clipsRemoved++;
+    output(`(${clipsRemoved}) Deleting clip: ${slug}${views !== undefined ? ` (${views} views)` : ''}`);
 
     return;
 
-    const gqlObject = [];
-    gqlObject[0] = {
+    const gqlObject = [{
         operationName: 'Clips_DeleteClips',
         variables: { input: { slugs: [slug] } },
         extensions: { persistedQuery: { version: 1, sha256Hash: 'df142a7eec57c5260d274b92abddb0bd1229dc538341434c90367cf1f22d71c4' } },
-    };
+    }];
 
     try {
         const result = await $$.ajax({
@@ -362,8 +377,6 @@ const deleteClip = async (slug, views = undefined) => {
             contentType: 'application/json',
         });
 
-        console.log('result', result);
-
         if (result[0].errors && result[0].errors[0].message) {
             output(`Internal deletion error for clip ${slug}: ${result[0].errors[0].message}`);
             return;
@@ -371,7 +384,7 @@ const deleteClip = async (slug, views = undefined) => {
 
         if (result[0].data && result[0].data.deleteClips && result[0].data.deleteClips.__typename !== 'undefined' && result[0].data.deleteClips.__typename == 'DeleteClipsPayload') {
             clipsRemoved++;
-            output(`(${clipsRemoved}) Successfully deleted clip: ${slug}${slug.views !== undefined ? ` (${slug.views} views)` : ''}`);
+            output(`(${clipsRemoved}) Successfully deleted clip: ${slug}${views !== undefined ? ` (${views} views)` : ''}`);
             return;
         }
 
@@ -381,12 +394,17 @@ const deleteClip = async (slug, views = undefined) => {
     }
 };
 
-const startRequestWorker = () => {
+const startRequestWorker = (callback) => {
+    if (clipQueue.length === 0) callback();
+
     worker = setInterval(() => {
         if (clipQueue.length === 0 || $$.active >= 20) return;
 
         const clip = clipQueue.pop(); // Last slug in the array should be the oldest (this method improves performance)
+        const newLength = clipQueue.length;
         deleteClip(clip.slug, clip.views);
+
+        if (newLength === 0) callback();
     }, 25);
 };
 
@@ -397,7 +415,7 @@ const stopRequestWorker = () => {
     }
 };
 
-const deleteClipPage = async (endpoint, finishedResolve, page = 1) => {
+const queueClipDeletions = async (endpoint, page = 1) => {
     try {
         output(`(${page}) Fetching batch of clips...`);
 
@@ -408,15 +426,19 @@ const deleteClipPage = async (endpoint, finishedResolve, page = 1) => {
         });
 
         if (count === 0) {
-            return finishedResolve();
+            return 0;
         }
 
-        output(`(${page}) Fetched batch of clips!`);
+        output(`(${page}) Fetched!`);
 
         clipQueue = [...clips.reverse(), ...clipQueue]; // <<- Newest | Oldest ->>
         console.log('clipQueue', clipQueue.length, clipQueue);
+
+        return count;
     } catch (err) {
         output(`Clip fetch error for batch ${page}: ${JSON.stringify(err)}`);
+
+        return false;
     }
 };
 
@@ -443,11 +465,12 @@ const makeUiLogic = () => {
         const { clips } = await $$.ajax({
             type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha&unchecked_only=1&limit=600`,
+            url: `${apiUrl}/music-clips?channel=buddha&unchecked_only=1&limit=${listLimit}`,
             dataType: 'json',
         });
 
         clearOutput();
+        outputClips(clips);
         output([
             unsafeWindow
                 .$('<div>')
@@ -458,7 +481,6 @@ const makeUiLogic = () => {
             $$('<br/>'),
             $$('<br/>'),
         ]);
-        outputClips(clips);
     });
 
     $$('#list_music_unchecked').click(async () => {
@@ -468,11 +490,12 @@ const makeUiLogic = () => {
         const { clips } = await $$.ajax({
             type: 'GET',
             // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=600`,
+            url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=${listLimit}`,
             dataType: 'json',
         });
 
         clearOutput();
+        outputClips(clips);
         output([
             unsafeWindow
                 .$('<div>')
@@ -483,21 +506,23 @@ const makeUiLogic = () => {
             $$('<br/>'),
             $$('<br/>'),
         ]);
-        outputClips(clips);
     });
 
     $$('#delete_music').click(async () => {
         if (worker) return;
 
+        clipsRemoved = 0;
+
         clearOutput();
         output('Deleting music clips...');
-        startRequestWorker();
 
-        await new Promise((resolve) => {
-            deleteClipPage(`${apiUrl}/music-clips?channel=buddha&minimal=1`, resolve);
+        let pageNum = 0;
+        startRequestWorker(async () => {
+            pageNum++;
+            const numClips = await queueClipDeletions(`${apiUrl}/music-clips?channel=buddha&minimal=1`, pageNum);
+            if (numClips === 0) stopRequestWorker();
         });
 
-        stopRequestWorker();
         clipQueue = [];
         output('Finished deleting clips!');
     });
@@ -521,6 +546,10 @@ const makeUiLogic = () => {
         stopRequestWorker();
         clipQueue = [];
         output('Stopped active operations!');
+    });
+
+    $$('#clear_output').click(async () => {
+        clearOutput();
     });
 };
 

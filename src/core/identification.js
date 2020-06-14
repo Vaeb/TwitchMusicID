@@ -132,6 +132,13 @@ export const fetchMp4Data = async (clip, clientId2) => {
         ],
     });
 
+    const clipData = responseData[0].data.clip;
+
+    if (clipData == null) {
+        console.log('>>> No mp4 data for', clip.id);
+        return false;
+    }
+
     // Get lowest quality above 400p if available... otherwise highest available.
     const mp4Collection = responseData[0].data.clip.videoQualities
         .map(mp4Data => ({
@@ -146,6 +153,8 @@ export const fetchMp4Data = async (clip, clientId2) => {
 
     clip.mp4Name = `${clip.id}.mp4`;
     clip.mp4Path = `./src/mp4/${clip.mp4Name}`;
+
+    return true;
 };
 
 let scanningBlockedAll = null;
@@ -175,7 +184,9 @@ export const identifyClip = async (clip, clientId2) => {
         console.log('> No cached fingerprint for', clip.id);
     }
 
-    await fetchMp4Data(clip, clientId2);
+    const mp4Found = await fetchMp4Data(clip, clientId2);
+
+    if (!mp4Found) return false;
 
     await downloadFile(clip.mp4Url, clip.mp4Path);
 
