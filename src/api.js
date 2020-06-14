@@ -75,7 +75,7 @@ import { getClipsByIds, chunkBy, delay } from './util.js';
 
             if (!hasClips) {
                 console.log('/music-clips error 2');
-                return res.status(400).send({
+                return res.send({
                     success: false,
                     error: `There are no clips in the database for channel "${query.channel}"`,
                 });

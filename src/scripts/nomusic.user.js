@@ -2,7 +2,7 @@
 // @name         Vaeb's Music-Clip Remover
 // @namespace    https://vaeb.io/
 // @copyright    Vaeb
-// @version      0.1
+// @version      0.1.1
 // @description  Frontend part of the music-clip remover process
 // @author       Vaeb
 // @match        https://www.twitch.tv/mute
@@ -21,6 +21,7 @@ const apiUrl = 'https://vaeb.io:3000/api';
 const globalClientId = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
 const maxOutput = 700;
 const listLimit = 600;
+const isTesting = false;
 
 let $$;
 
@@ -329,7 +330,7 @@ const outputClips = (clips) => {
 
         const $clipDiv = $$('<div>');
 
-        $clipDiv.append(makeLink(link), ' - ', `${clip.views} views`);
+        $clipDiv.append(makeLink(link), ' - ', `${clip.title}`, ' - ', `${clip.views} views`);
 
         if (clip.song) {
             $clipDiv.append(
@@ -351,10 +352,11 @@ const outputClips = (clips) => {
 };
 
 const deleteClip = async (slug, views = undefined) => {
-    clipsRemoved++;
-    output(`(${clipsRemoved}) Deleting clip: ${slug}${views !== undefined ? ` (${views} views)` : ''}`);
-
-    return;
+    if (isTesting) {
+        clipsRemoved++;
+        output(`(${clipsRemoved}) Deleting clip: ${slug}${views !== undefined ? ` (${views} views)` : ''}`);
+        return;
+    }
 
     const gqlObject = [{
         operationName: 'Clips_DeleteClips',
@@ -414,11 +416,16 @@ const queueClipDeletions = async (endpoint, page = 1) => {
     try {
         output(`(${page}) Fetching batch of clips...`);
 
-        const { clips, count } = await $$.ajax({
+        const { success, error, clips, count } = await $$.ajax({
             type: 'GET',
             url: `${endpoint}&page=${page}`,
             dataType: 'json',
         });
+
+        if (!success) {
+            output(error);
+            return 0;
+        }
 
         if (count === 0) {
             return 0;
@@ -442,14 +449,18 @@ const makeUiLogic = () => {
         clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { clips } = await $$.ajax({
+        const { success, error, clips } = await $$.ajax({
             type: 'GET',
-            // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha`,
+            url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
             dataType: 'json',
         });
 
+        if (!success) {
+            output(error);
+            return;
+        }
         clearOutput();
+
         outputClips(clips);
     });
 
@@ -457,14 +468,18 @@ const makeUiLogic = () => {
         clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { clips } = await $$.ajax({
+        const { success, error, clips } = await $$.ajax({
             type: 'GET',
-            // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha&unchecked_only=1&limit=${listLimit}`,
+            url: `${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked_only=1&limit=${listLimit}`,
             dataType: 'json',
         });
 
+        if (!success) {
+            output(error);
+            return;
+        }
         clearOutput();
+
         outputClips(clips);
         output([
             unsafeWindow
@@ -482,14 +497,18 @@ const makeUiLogic = () => {
         clearOutput();
         output('Fetching data, this may take a few seconds...');
 
-        const { clips } = await $$.ajax({
+        const { success, error, clips } = await $$.ajax({
             type: 'GET',
-            // url: `${apiUrl}/music-clips?channel=${clientData.displayName}`,
-            url: `${apiUrl}/music-clips?channel=buddha&unchecked=1&limit=${listLimit}`,
+            url: `${apiUrl}/music-clips?channel=${clientData.displayName}&unchecked=1&limit=${listLimit}`,
             dataType: 'json',
         });
 
+        if (!success) {
+            output(error);
+            return;
+        }
         clearOutput();
+
         outputClips(clips);
         output([
             unsafeWindow
@@ -571,6 +590,10 @@ const loadClientData = () => {
 
     clientData = JSON.parse(decodeURIComponent(clientDataRaw));
     clientData.oAuth = `OAuth ${clientData.authToken}`;
+
+    if (isTesting) {
+        clientData.displayName = 'Buddha';
+    }
 
     deleteHeaders = {
         Authorization: clientData.oAuth,
