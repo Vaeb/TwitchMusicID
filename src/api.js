@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import util from 'util';
 import fs from 'fs';
 import http from 'http';
@@ -8,7 +9,7 @@ import pretty from 'express-prettify';
 import bodyParser from 'body-parser';
 
 import { dbPromise } from './db.js';
-import { getClipsByIds, chunkBy } from './util.js';
+import { getClipsByIds, chunkBy, delay } from './util.js';
 
 (async () => {
     const db = await dbPromise;
@@ -120,19 +121,27 @@ import { getClipsByIds, chunkBy } from './util.js';
             const musicClips = [];
             const deleteSlugs = [];
 
-            await Promise.all(clipsBatches.map(async (clipsBatch) => {
-                const clipsExistingMap = Object.assign(
-                    {},
-                    ...(await getClipsByIds(clipsBatch.map(clipRecord => clipRecord.slug))).map(clip => ({ [clip.id]: clip }))
-                );
-                clipsBatch.forEach((clipRecord) => {
-                    if (clipsExistingMap[clipRecord.slug]) {
-                        musicClips.push({ ...clipRecord, title: clipsExistingMap[clipRecord.slug].title });
-                    } else {
-                        deleteSlugs.push(clipRecord.slug);
-                    }
-                });
-            }));
+            for (let i = 0; i < 6; i++) {
+                try {
+                    await Promise.all(clipsBatches.map(async (clipsBatch) => {
+                        const clipsExistingMap = Object.assign(
+                            {},
+                            ...(await getClipsByIds(clipsBatch.map(clipRecord => clipRecord.slug))).map(clip => ({ [clip.id]: clip }))
+                        );
+                        clipsBatch.forEach((clipRecord) => {
+                            if (clipsExistingMap[clipRecord.slug]) {
+                                musicClips.push({ ...clipRecord, title: clipsExistingMap[clipRecord.slug].title });
+                            } else {
+                                deleteSlugs.push(clipRecord.slug);
+                            }
+                        });
+                    }));
+                    break;
+                } catch (err) {
+                    console.log('Caught twitch api error:', err);
+                    await delay(1000 * 3);
+                }
+            }
 
             if (!query.minimal) {
                 musicClips.forEach((clipRecord, i) => {
