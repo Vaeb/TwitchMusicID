@@ -1,5 +1,5 @@
 import { twitchClientPromise, chatClientPromise, commands, connectedPromise } from '../setup.js';
-import { sendMessage } from '../util.js';
+import { sendMessage, dString } from '../util.js';
 
 (async () => {
     const twitchClient = await twitchClientPromise;
@@ -31,9 +31,9 @@ import { sendMessage } from '../util.js';
 
     console.log('Ran events module');
 
-    // if (process.platform !== 'win32') {
-    //     await connectedPromise;
+    await connectedPromise;
 
+    // if (process.platform !== 'win32') {
     //     const send = (...args) => sendMessage(chatClient, 'vaeben', ...args);
 
     //     const identifyCommand = commands.find(command => command.name == 'identify');
@@ -41,4 +41,17 @@ import { sendMessage } from '../util.js';
     //         send,
     //     });
     // }
+
+    const heartbeatFunc = () => {
+        chatClient.getMods('buddha')
+            .then(() => {
+                console.log(`[${dString()}] Performed heartbeat fetch`);
+            })
+            .catch((err) => {
+                console.log(`[${dString()}] Heartbeat fetch failed:`, err);
+            });
+    };
+
+    setInterval(heartbeatFunc, 1000 * 60 * 20);
+    heartbeatFunc();
 })();

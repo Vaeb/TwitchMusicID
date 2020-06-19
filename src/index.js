@@ -6,9 +6,11 @@ import './core/events.js';
 (async () => {
     const chatClient = await chatClientPromise;
     await chatClient.connect();
-    getConnectedResolve()(true);
 
-    console.log('Loaded TwitchMusicId!');
+    chatClient.onRegister(() => {
+        console.log('Loaded TwitchMusicId!');
+        getConnectedResolve()(true);
+    });
 })();
 
 process.on('unhandledRejection', (error, p) => {

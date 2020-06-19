@@ -62,7 +62,7 @@ export default {
     params: [],
 
     func: async ({ send, args }) => {
-        if (process.platform === 'win32') return;
+        // if (process.platform === 'win32') return;
 
         const channelTargetName = args[0];
         send(`\nIdentifying top clips for ${channelTargetName}...`);
